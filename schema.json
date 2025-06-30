@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GrapplingHook Config",
+  "type": "object",
+  "required": ["config_version"],
+  "unevaluatedProperties": false,
+  "properties": {
+    "$schema": {
+      "description": "URL to the JSON schema file",
+      "type": "string"
+    },
+    "config_version": {
+      "description": "Configuration version, don't change this",
+      "type": "string",
+      "default": "1.0",
+      "const": "1.0"
+    },
+    "usePermissions": {
+      "description": "Whether to use permissions for the plugin",
+      "type": "boolean",
+      "default": false
+    },
+    "teleportToHook": {
+      "description": "Setting this to true will use teleporting instead of velocity",
+      "type": "boolean",
+      "default": false
+    },
+    "useMetrics": {
+      "description": "Setting this to false will not report plugin metrics to bstats",
+      "type": "boolean",
+      "default": true
+    },
+    "consumeUseOnSlowfall": {
+      "description": "Setting this to true will consume uses when the hook slowfall is used",
+      "type": "boolean",
+      "default": false
+    },
+    "command": {
+      "description": "Change this to change the base command alias for the plugin",
+      "type": "string",
+      "default": "gh"
+    },
+    "language": {
+      "description": "Language setting (en, ru)",
+      "type": "string",
+      "enum": ["en", "ru"],
+      "default": "en"
+    },
+    "hooks": {
+      "description": "Configuration for different hook types",
+      "type": "object",
+      "properties": {
+        "default": {
+          "description": "Default hook configuration",
+          "type": "object",
+          "properties": {
+            "cooldown": {
+              "description": "Cooldown in seconds between uses",
+              "type": "number",
+              "default": 5
+            },
+            "maxUses": {
+              "description": "Maximum number of uses (-1 for unlimited)",
+              "type": "integer",
+              "default": -1
+            },
+            "pullStrength": {
+              "description": "Strength of the pull effect",
+              "type": "number",
+              "default": 2.0
+            },
+            "maxDistance": {
+              "description": "Maximum distance the hook can travel",
+              "type": "number",
+              "default": 30.0
+            }
+          }
+        }
+      }
+    }
+  }
+}

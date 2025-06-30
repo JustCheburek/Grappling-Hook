@@ -1,0 +1,78 @@
+plugins {
+  id 'com.github.johnrengelman.shadow' version '8.1.1'
+  id 'java-library'
+}
+
+version = project.version
+
+configurations {
+  shade
+}
+
+repositories {
+  mavenCentral()
+  maven {
+    name = 'spigot'
+    url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+  }
+  maven {
+    name = 'papermc'
+    url = 'https://repo.papermc.io/repository/maven-public/'
+  }
+  maven {
+    name = 'sonatype'
+    url = 'https://oss.sonatype.org/content/groups/public/'
+  }
+  maven {
+    name = 'bstats'
+    url = 'https://repo.codemc.org/repository/maven-public'
+  }
+}
+
+dependencies {
+  compileOnly 'org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT'
+  
+  // Optional: bStats for metrics
+  implementation 'org.bstats:bstats-bukkit:3.0.2'
+  
+  // Testing dependencies
+  testImplementation platform("org.junit:junit-bom:5.10.0")
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+java {
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
+}
+
+shadowJar {
+  archiveClassifier.set('')
+  
+  // Relocate bStats if you use it
+  relocate 'org.bstats', 'com.snowgears.grapplinghook.lib.bstats'
+  
+  minimize {
+    exclude(dependency('org.bstats:.*:.*'))
+  }
+}
+
+processResources {
+  def props = [version: version]
+  inputs.properties props
+  filteringCharset 'UTF-8'
+  filesMatching('plugin.yml') {
+    expand props
+  }
+}
+
+build {
+  dependsOn shadowJar
+}
+
+test {
+  useJUnitPlatform()
+  testLogging {
+    events "passed", "skipped", "failed"
+    showStandardStreams = true
+  }
+}
