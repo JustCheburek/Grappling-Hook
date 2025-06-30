@@ -12,6 +12,9 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -19,11 +22,37 @@ public class RecipeLoader {
 
     private GrapplingHook plugin;
     private File recipesFile;
+    private YamlConfiguration localizedRecipes;
+    private Map<String, ItemStack> hookItems = new HashMap<>();
 
     public RecipeLoader(GrapplingHook plugin){
         this.plugin = plugin;
         this.recipesFile = new File(plugin.getDataFolder(), "recipes.yml");
-
+        
+        // Загружаем локализованные рецепты
+        loadLocalizedRecipes();
+        
+        loadRecipes();
+    }
+    
+    private void loadLocalizedRecipes() {
+        String locale = plugin.getConfig().getString("language", "en");
+        File localizedRecipesFile = new File(plugin.getDataFolder(), "recipes_" + locale + ".yml");
+        
+        if (localizedRecipesFile.exists()) {
+            localizedRecipes = YamlConfiguration.loadConfiguration(localizedRecipesFile);
+            plugin.getLogger().log(Level.INFO, "Loaded localized recipes for " + locale);
+        } else {
+            // Если локализованного файла нет, используем стандартный
+            localizedRecipes = null;
+            plugin.getLogger().log(Level.INFO, "No localized recipes found for " + locale + ", using default");
+        }
+    }
+    
+    public void reload() {
+        unloadRecipes();
+        hookItems.clear();
+        loadLocalizedRecipes();
         loadRecipes();
     }
 
@@ -36,18 +65,33 @@ public class RecipeLoader {
         }
 
         Set<String> allRecipeNumbers = config.getConfigurationSection("recipes").getKeys(false);
-
+        
+        // Первый проход: создаем все предметы крюков
         for (String recipeNumber : allRecipeNumbers) {
             boolean enabled = config.getBoolean("recipes." + recipeNumber + ".enabled");
             if (enabled) {
                 String id = config.getString("recipes." + recipeNumber + ".id");
-                String name = config.getString("recipes." + recipeNumber + ".name");
+                
+                // Получаем локализованное имя и описание, если доступно
+                String name;
                 List<String> lore;
-                try {
-                    lore = config.getStringList("recipes." + recipeNumber + ".lore");
-                } catch (NullPointerException e) {
-                    lore = new ArrayList<>();
+                
+                if (localizedRecipes != null && localizedRecipes.contains("recipes." + recipeNumber + ".name")) {
+                    name = localizedRecipes.getString("recipes." + recipeNumber + ".name");
+                    try {
+                        lore = localizedRecipes.getStringList("recipes." + recipeNumber + ".lore");
+                    } catch (NullPointerException e) {
+                        lore = config.getStringList("recipes." + recipeNumber + ".lore");
+                    }
+                } else {
+                    name = config.getString("recipes." + recipeNumber + ".name");
+                    try {
+                        lore = config.getStringList("recipes." + recipeNumber + ".lore");
+                    } catch (NullPointerException e) {
+                        lore = new ArrayList<>();
+                    }
                 }
+                
                 int uses = config.getInt("recipes." + recipeNumber + ".uses");
                 double velocityThrow = config.getDouble("recipes." + recipeNumber + ".velocityThrow");
                 double velocityPull = config.getDouble("recipes." + recipeNumber + ".velocityPull");
@@ -127,16 +171,39 @@ public class RecipeLoader {
                 hookSettings.setHookItem(hookItem);
                 //register the hook setting in map
                 plugin.getGrapplingListener().addHookSettings(id, hookSettings);
+                
+                // Сохраняем предмет для использования в рецептах
+                hookItems.put(id, hookItem.clone());
+            }
+        }
+
+        // Второй проход: создаем рецепты
+        for (String recipeNumber : allRecipeNumbers) {
+            boolean enabled = config.getBoolean("recipes." + recipeNumber + ".enabled");
+            if (enabled) {
+                String id = config.getString("recipes." + recipeNumber + ".id");
+                ItemStack hookItem = hookItems.get(id);
+                
+                if (hookItem == null) {
+                    plugin.getLogger().log(Level.WARNING, "Could not find hook item for ID: " + id);
+                    continue;
+                }
 
                 NamespacedKey key = new NamespacedKey(plugin, "hook_item_" + id);
                 ShapedRecipe recipe = new ShapedRecipe(key, hookItem);
 
-                HashMap<String, Material> materialMap = new HashMap<>();
+                HashMap<String, Object> materialMap = new HashMap<>();
                 Set<String> materialKeys = config.getConfigurationSection("recipes." + recipeNumber + ".recipe.materials").getKeys(false);
                 for (String materialKey : materialKeys) {
                     try {
-                        Material material = Material.valueOf(config.getString("recipes." + recipeNumber + ".recipe.materials." + materialKey));
-                        materialMap.put(materialKey, material);
+                        String materialValue = config.getString("recipes." + recipeNumber + ".recipe.materials." + materialKey);
+                        // Проверяем, является ли материал пользовательским предметом (крюком)
+                        if (hookItems.containsKey(materialValue)) {
+                            materialMap.put(materialKey, hookItems.get(materialValue));
+                        } else {
+                            Material material = Material.valueOf(materialValue);
+                            materialMap.put(materialKey, material);
+                        }
                     } catch (IllegalArgumentException iae) {
                         plugin.getLogger().log(Level.WARNING, "ERROR READING MATERIAL VALUE IN RECIPES.YML FILE");
                     } catch (NullPointerException npe) {
@@ -172,8 +239,6 @@ public class RecipeLoader {
                     threeLettersArray[2] = threeLettersArray[0].substring(0, threeLettersArray[2].length()-1);
                 }
 
-
-
                 if(onlyContainsUnderscores(threeLettersArray[0])){
                     recipe.shape(threeLettersArray[1], threeLettersArray[2]);
                     if(threeLettersArray[1].contains("_") || threeLettersArray[2].contains("_")) {
@@ -198,23 +263,36 @@ public class RecipeLoader {
                         plugin.getLogger().log(Level.WARNING, "Problem with shaping recipe "+recipeNumber);
                     }
                 }
-                //System.out.println(threeLettersArray[0] + ", "+ threeLettersArray[1] + ", "+threeLettersArray[2]);
-                //recipe.shape("1 1")
 
-                for (Map.Entry<String, Material> entry : materialMap.entrySet()) {
-                    if(entry.getValue().toString().contains("_PLANKS")){
-                        recipe.setIngredient(entry.getKey().charAt(0), new RecipeChoice.MaterialChoice(Tag.PLANKS));
-                    }
-                    else {
+                for (Map.Entry<String, Object> entry : materialMap.entrySet()) {
+                    if (entry.getValue() instanceof Material) {
+                        Material material = (Material) entry.getValue();
+                        if(material.toString().contains("_PLANKS")){
+                            recipe.setIngredient(entry.getKey().charAt(0), new RecipeChoice.MaterialChoice(Tag.PLANKS));
+                        }
+                        else {
+                            try {
+                                recipe.setIngredient(entry.getKey().charAt(0), material);
+                            } catch (IllegalArgumentException e){
+                                plugin.getLogger().log(Level.WARNING, "Problem with setting ingredient in recipe "+recipeNumber);
+                            }
+                        }
+                    } else if (entry.getValue() instanceof ItemStack) {
+                        // Если материал - это пользовательский предмет (крюк)
                         try {
-                            recipe.setIngredient(entry.getKey().charAt(0), entry.getValue());
+                            recipe.setIngredient(entry.getKey().charAt(0), new RecipeChoice.ExactChoice((ItemStack) entry.getValue()));
                         } catch (IllegalArgumentException e){
-                            plugin.getLogger().log(Level.WARNING, "Problem with setting ingredient in recipe "+recipeNumber);
+                            plugin.getLogger().log(Level.WARNING, "Problem with setting custom ingredient in recipe "+recipeNumber);
                         }
                     }
                 }
-                Bukkit.addRecipe(recipe);
-                loadedCount++;
+                
+                try {
+                    Bukkit.addRecipe(recipe);
+                    loadedCount++;
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING, "Failed to add recipe for " + id + ": " + e.getMessage());
+                }
             }
         }
 

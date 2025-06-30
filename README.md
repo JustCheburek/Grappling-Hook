@@ -4,19 +4,20 @@
 
 ![](https://media1.giphy.com/media/hYy8SLxGCs4y8KhdIq/giphy.gif?cid=790b76119902063a37a4901a29dbf9ab0c5db89b0f002983&rid=giphy.gif&ct=g)
 
-![](https://media1.giphy.com/media/rZjGCONqMobo4jhbmr/giphy.gif?cid=790b761104c38b6b3c5dd398cec5d075590bffe1ffe6c336&rid=giphy.gif&ct=g)
+![](https://media1.giphy.com/media/rZjGCONqobo4jhbmr/giphy.gif?cid=790b761104c38b6b3c5dd398cec5d075590bffe1ffe6c336&rid=giphy.gif&ct=g)
 
 ![](https://media4.giphy.com/media/ltDO03o1wak7NbQqjM/giphy.gif?cid=790b7611f461771b74cc299d84ac7e010eb7450495608c17&rid=giphy.gif&ct=g)
 
 **Default crafting recipes**
 (you can customize any of these in the recipes.yml file)
 
-![](https://i.imgur.com/o4PkGkq.png)
-![](https://i.imgur.com/9hrNktW.png)
-![](https://i.imgur.com/8jGocOG.png)
-![](https://i.imgur.com/SYY4gbH.png)
-![](https://i.imgur.com/YtyyU58.png)
-![](https://i.imgur.com/3GCpsq5.png)
+The plugin now features a progressive crafting system:
+1. Wood Hook: Fishing Rod + 8 Wood Planks
+2. Stone Hook: Wood Hook + 8 Cobblestone
+3. Iron Hook: Stone Hook + 8 Iron Ingots
+4. Gold Hook: Iron Hook + 8 Gold Ingots
+5. Emerald Hook: Gold Hook + 8 Emeralds
+6. Diamond Hook: Emerald Hook + 8 Diamonds
 
 **Features:**
  - No commands necessary.
@@ -27,6 +28,9 @@
  - No permissions required. (But are supported)
  - No configuration required. (But is optional)
  - Plug and Play.
+ - Multilanguage support (English, Russian)
+ - Progressive crafting system
+ - Repair hooks in anvils using crafting materials
 
 **Configuration:**
 
@@ -41,6 +45,66 @@ fallDamage - if this is false, fall damage will not inflict the user after use
 lineBreak - if this is true, the players velocity will be reset when the fishing line snaps
 airHook - this allows a hook to be used in the air (like in the last gif)
 stickyHook - this allows a hook to stick to walls and ceilings when it hits them
+```
+
+**Recipe System**
+
+The plugin now features a progressive crafting system where higher-tier hooks require the previous tier hook as an ingredient. For example:
+
+```yaml
+recipe:
+  materials:
+    W: 'wood_hook'  # This references another hook by its ID
+    C: 'COBBLESTONE'
+  shape:
+    - '[C][C][C]'
+    - '[C][W][C]'
+    - '[C][C][C]'
+```
+
+In this example, the recipe requires a Wood Hook (referenced by its ID 'wood_hook') surrounded by 8 cobblestone blocks.
+
+**Repairing Hooks**
+
+Hooks can be repaired in an anvil using the same material used to craft them:
+- Wood Hook: Oak Planks
+- Stone Hook: Cobblestone
+- Iron Hook: Iron Ingot
+- Gold Hook: Gold Ingot
+- Emerald Hook: Emerald
+- Diamond Hook: Diamond
+- Air Hook: Feather
+- Water Hook: Water Bucket
+
+Each repair material restores 25% of the hook's maximum uses and costs 1 level of experience.
+
+**Localization**
+
+The plugin supports multiple languages. You can change the language in the config.yml file:
+```yaml
+# Language setting (en, ru) #
+language: 'en'
+```
+
+Available languages:
+- English (en)
+- Russian (ru)
+
+You can add your own language by creating new files in the plugin folder:
+- `messages_<language-code>.yml` - for plugin messages
+- `recipes_<language-code>.yml` - for item names and descriptions
+
+For recipes localization, you only need to include the name and lore sections for each recipe. For example:
+```yaml
+recipes:
+  1:
+    name: '&6Деревянный Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
+  2:
+    name: '&6Каменный Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
 ```
 
 **Commands**

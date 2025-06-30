@@ -1,0 +1,20 @@
+# Русская локализация для плагина GrapplingHook
+command:
+  not_authorized: "&cУ вас нет прав для использования этой команды."
+  reload_success: "&aПлагин GrapplingHook был перезагружен."
+  reload_console: "[GrapplingHook] Плагин перезагружен."
+  hook_not_found: "&cКрюк с ID %id% не найден."
+  player_not_found: "&cИгрок с именем %player% не найден."
+  give_success: "&aВыдан крюк <%id%> игроку %player%."
+  received_hook: "&a%player% выдал вам крюк <%id%>."
+  received_hook_console: "&aСервер выдал вам крюк <%id%>."
+  help_give_self: "/%command% give <hook_id> - выдать себе крюк"
+  help_give_other: "/%command% give <hook_id> <player> - выдать крюк игроку"
+  help_give_console: "/%command% give <hook_id> <player> - выдать крюк игроку"
+
+hook:
+  cooldown: "&7Вы не можете сделать это сейчас."
+  
+anvil:
+  not_enough_xp: "&cУ вас недостаточно опыта для ремонта крюка."
+  repair_success: "&aКрюк успешно отремонтирован!" 

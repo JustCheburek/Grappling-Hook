@@ -12,7 +12,9 @@ import org.bukkit.util.StringUtil;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CommandHandler extends BukkitCommand {
 
@@ -37,14 +39,18 @@ public class CommandHandler extends BukkitCommand {
 
                 //these are commands only operators have access to
                 if (player.hasPermission("grapplinghook.operator") || player.isOp()) {
-                    player.sendMessage("/"+this.getName()+" give <hook_id> - give yourself a hook");
-                    player.sendMessage("/"+this.getName()+" give <hook_id> <player> - give player a hook");
+                    Map<String, String> placeholders = new HashMap<>();
+                    placeholders.put("command", this.getName());
+                    player.sendMessage(plugin.getMessageManager().getCommandMessage("help_give_self", placeholders));
+                    player.sendMessage(plugin.getMessageManager().getCommandMessage("help_give_other", placeholders));
                     return true;
                 }
             }
             //these are commands that can be executed from the console
             else{
-                sender.sendMessage("/"+this.getName()+" give <hook_id> <player> - give player a hook");
+                Map<String, String> placeholders = new HashMap<>();
+                placeholders.put("command", this.getName());
+                sender.sendMessage(plugin.getMessageManager().getCommandMessage("help_give_console", placeholders));
                 return true;
             }
         } else if (args.length == 1) {
@@ -52,14 +58,14 @@ public class CommandHandler extends BukkitCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     if ((plugin.usePerms() && !player.hasPermission("grapplinghook.operator")) || (!plugin.usePerms() && !player.isOp())) {
-                        player.sendMessage(ChatColor.RED+"You are not authorized to use this command.");
+                        player.sendMessage(plugin.getMessageManager().getCommandMessage("not_authorized"));
                         return true;
                     }
                     plugin.reload();
-                    player.sendMessage(ChatColor.GREEN+"GrapplingHook has been reloaded.");
+                    player.sendMessage(plugin.getMessageManager().getCommandMessage("reload_success"));
                 } else {
                     plugin.reload();
-                    sender.sendMessage("[GrapplingHook] Reloaded plugin.");
+                    sender.sendMessage(plugin.getMessageManager().getCommandMessage("reload_console"));
                     return true;
                 }
             }
@@ -68,18 +74,23 @@ public class CommandHandler extends BukkitCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     if ((plugin.usePerms() && !player.hasPermission("grapplinghook.operator")) || (!plugin.usePerms() && !player.isOp())) {
-                        player.sendMessage(ChatColor.RED+"You are not authorized to use this command.");
+                        player.sendMessage(plugin.getMessageManager().getCommandMessage("not_authorized"));
                         return true;
                     }
 
                     String hookID = args[1];
                     HookSettings hookSettings = plugin.getGrapplingListener().getHookSettings(hookID);
                     if(hookSettings == null){
-                        player.sendMessage(ChatColor.RED+"No grappling hook found with id: "+hookID);
+                        Map<String, String> placeholders = new HashMap<>();
+                        placeholders.put("id", hookID);
+                        player.sendMessage(plugin.getMessageManager().getCommandMessage("hook_not_found", placeholders));
                         return true;
                     }
                     player.getInventory().addItem(hookSettings.getHookItem());
-                    player.sendMessage(ChatColor.GREEN+"Gave grappling hook <"+hookID+"> to "+player.getName());
+                    Map<String, String> placeholders = new HashMap<>();
+                    placeholders.put("id", hookID);
+                    placeholders.put("player", player.getName());
+                    player.sendMessage(plugin.getMessageManager().getCommandMessage("give_success", placeholders));
                     return true;
                 }
             }
@@ -89,43 +100,64 @@ public class CommandHandler extends BukkitCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     if ((plugin.usePerms() && !player.hasPermission("grapplinghook.operator")) || (!plugin.usePerms() && !player.isOp())) {
-                        player.sendMessage(ChatColor.RED+"You are not authorized to use this command.");
+                        player.sendMessage(plugin.getMessageManager().getCommandMessage("not_authorized"));
                         return true;
                     }
 
                     String hookID = args[1];
                     HookSettings hookSettings = plugin.getGrapplingListener().getHookSettings(hookID);
                     if(hookSettings == null){
-                        player.sendMessage(ChatColor.RED+"No grappling hook found with id: "+hookID);
+                        Map<String, String> placeholders = new HashMap<>();
+                        placeholders.put("id", hookID);
+                        player.sendMessage(plugin.getMessageManager().getCommandMessage("hook_not_found", placeholders));
                         return true;
                     }
 
                     Player playerToGive = plugin.getServer().getPlayer(args[2]);
                     if(playerToGive == null){
-                        player.sendMessage(ChatColor.RED+"No player found online with name: "+args[2]);
+                        Map<String, String> placeholders = new HashMap<>();
+                        placeholders.put("player", args[2]);
+                        player.sendMessage(plugin.getMessageManager().getCommandMessage("player_not_found", placeholders));
                         return true;
                     }
                     playerToGive.getInventory().addItem(hookSettings.getHookItem());
-                    player.sendMessage(ChatColor.GREEN+"Gave grappling hook <"+hookID+"> to "+args[2]);
-                    playerToGive.sendMessage(ChatColor.GREEN+player.getName()+" gave you a grappling hook <"+hookID+">");
+                    Map<String, String> placeholders = new HashMap<>();
+                    placeholders.put("id", hookID);
+                    placeholders.put("player", args[2]);
+                    player.sendMessage(plugin.getMessageManager().getCommandMessage("give_success", placeholders));
+                    
+                    Map<String, String> receiverPlaceholders = new HashMap<>();
+                    receiverPlaceholders.put("id", hookID);
+                    receiverPlaceholders.put("player", player.getName());
+                    playerToGive.sendMessage(plugin.getMessageManager().getCommandMessage("received_hook", receiverPlaceholders));
                     return true;
                 }
                 else {
                     String hookID = args[1];
                     HookSettings hookSettings = plugin.getGrapplingListener().getHookSettings(hookID);
                     if(hookSettings == null){
-                        sender.sendMessage("No grappling hook found with id: "+hookID);
+                        Map<String, String> placeholders = new HashMap<>();
+                        placeholders.put("id", hookID);
+                        sender.sendMessage(plugin.getMessageManager().getCommandMessage("hook_not_found", placeholders));
                         return true;
                     }
 
                     Player playerToGive = plugin.getServer().getPlayer(args[2]);
                     if(playerToGive == null){
-                        sender.sendMessage("No player found online with name: "+args[2]);
+                        Map<String, String> placeholders = new HashMap<>();
+                        placeholders.put("player", args[2]);
+                        sender.sendMessage(plugin.getMessageManager().getCommandMessage("player_not_found", placeholders));
                         return true;
                     }
                     playerToGive.getInventory().addItem(hookSettings.getHookItem());
-                    sender.sendMessage("Gave grappling hook <"+hookID+"> to "+args[2]);
-                    playerToGive.sendMessage(ChatColor.GREEN+"The server has given you a grappling hook <"+hookID+">");
+                    Map<String, String> placeholders = new HashMap<>();
+                    placeholders.put("id", hookID);
+                    placeholders.put("player", args[2]);
+                    sender.sendMessage(plugin.getMessageManager().getCommandMessage("give_success", placeholders));
+                    
+                    Map<String, String> receiverPlaceholders = new HashMap<>();
+                    receiverPlaceholders.put("id", hookID);
+                    playerToGive.sendMessage(plugin.getMessageManager().getCommandMessage("received_hook_console", receiverPlaceholders));
                     return true;
                 }
             }

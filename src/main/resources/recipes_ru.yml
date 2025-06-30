@@ -1,0 +1,289 @@
+# Спасибо за загрузку Grappling Hook! #
+# ЕСЛИ У ВАС ЕСТЬ ВОПРОСЫ, ПРИСОЕДИНЯЙТЕСЬ К МОЕМУ DISCORD: https://discord.gg/GpSwEWS #
+
+# &b : БИРЮЗОВЫЙ
+# &0 : ЧЕРНЫЙ
+# &9 : СИНИЙ
+# &l : ЖИРНЫЙ
+# &3 : ТЕМНО-БИРЮЗОВЫЙ
+# &1 : ТЕМНО-СИНИЙ
+# &8 : ТЕМНО-СЕРЫЙ
+# &2 : ТЕМНО-ЗЕЛЕНЫЙ
+# &5 : ТЕМНО-ФИОЛЕТОВЫЙ
+# &4 : ТЕМНО-КРАСНЫЙ
+# &6 : ЗОЛОТОЙ
+# &7 : СЕРЫЙ
+# &a : ЗЕЛЕНЫЙ
+# &o : КУРСИВ
+# &d : СВЕТЛО-ФИОЛЕТОВЫЙ
+# &k : МАГИЧЕСКИЙ
+# &c : КРАСНЫЙ
+# &r : СБРОС
+# &m : ЗАЧЕРКНУТЫЙ
+# &n : ПОДЧЕРКНУТЫЙ
+# &f : БЕЛЫЙ
+# &e : ЖЕЛТЫЙ
+
+
+# [uses] - тег, который будет отображать количество оставшихся использований крюка #
+recipes:
+  1:
+    enabled: true
+    id: 'wood_hook'
+    name: '&6Деревянный Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
+    customModelData: 0
+    uses: 5
+    velocityThrow: 1.0
+    velocityPull: 1.0
+    timeBetweenGrapples: 0 # в секундах #
+    fallDamage: false
+    slowFall: true
+    lineBreak: true
+    stickyHook: true
+    recipe:
+      materials:
+        F: 'FISHING_ROD'
+        P: 'OAK_PLANKS' # это все виды деревянных досок #
+      shape:
+        - '[P][P][P]'
+        - '[P][F][P]'
+        - '[P][P][P]'
+    entity:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'ITEM_FRAME'
+        - 'ARMOR_STAND'
+    material:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'WATER'
+        - 'AIR'
+  2:
+    enabled: true
+    id: 'stone_hook'
+    name: '&6Каменный Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
+    customModelData: 0
+    uses: 10
+    velocityThrow: 1.0
+    velocityPull: 1.0
+    timeBetweenGrapples: 0 # в секундах #
+    fallDamage: false
+    slowFall: true
+    lineBreak: true
+    stickyHook: true
+    recipe:
+      materials:
+        W: 'wood_hook'
+        C: 'COBBLESTONE'
+      shape:
+        - '[C][C][C]'
+        - '[C][W][C]'
+        - '[C][C][C]'
+    entity:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'ITEM_FRAME'
+        - 'ARMOR_STAND'
+    material:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'WATER'
+        - 'AIR'
+  3:
+    enabled: true
+    id: 'iron_hook'
+    name: '&6Железный Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
+    customModelData: 0
+    uses: 20
+    velocityThrow: 1.0
+    velocityPull: 1.0
+    timeBetweenGrapples: 0 # в секундах #
+    fallDamage: false
+    slowFall: true
+    lineBreak: true
+    stickyHook: true
+    recipe:
+      materials:
+        S: 'stone_hook'
+        I: 'IRON_INGOT'
+      shape:
+        - '[I][I][I]'
+        - '[I][S][I]'
+        - '[I][I][I]'
+    entity:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'ITEM_FRAME'
+        - 'ARMOR_STAND'
+    material:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'WATER'
+        - 'AIR'
+  4:
+    enabled: true
+    id: 'gold_hook'
+    name: '&6Золотой Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
+    customModelData: 0
+    uses: 25
+    velocityThrow: 1.0
+    velocityPull: 1.0
+    timeBetweenGrapples: 0 # в секундах #
+    fallDamage: false
+    slowFall: true
+    lineBreak: true
+    stickyHook: true
+    recipe:
+      materials:
+        I: 'iron_hook'
+        G: 'GOLD_INGOT'
+      shape:
+        - '[G][G][G]'
+        - '[G][I][G]'
+        - '[G][G][G]'
+    entity:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'ITEM_FRAME'
+        - 'ARMOR_STAND'
+    material:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'WATER'
+        - 'AIR'
+  5:
+    enabled: true
+    id: 'emerald_hook'
+    name: '&6Изумрудный Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
+    customModelData: 0
+    uses: 40
+    velocityThrow: 1.0
+    velocityPull: 1.0
+    timeBetweenGrapples: 0 # в секундах #
+    fallDamage: false
+    slowFall: true
+    lineBreak: true
+    stickyHook: true
+    recipe:
+      materials:
+        G: 'gold_hook'
+        E: 'EMERALD'
+      shape:
+        - '[E][E][E]'
+        - '[E][G][E]'
+        - '[E][E][E]'
+    entity:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'ITEM_FRAME'
+        - 'ARMOR_STAND'
+    material:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'WATER'
+        - 'AIR'
+  6:
+    enabled: true
+    id: 'diamond_hook'
+    name: '&6Алмазный Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
+    customModelData: 0
+    uses: 100
+    velocityThrow: 1.0
+    velocityPull: 1.0
+    timeBetweenGrapples: 0 # в секундах #
+    fallDamage: false
+    slowFall: true
+    lineBreak: true
+    stickyHook: true
+    recipe:
+      materials:
+        E: 'emerald_hook'
+        D: 'DIAMOND'
+      shape:
+        - '[D][D][D]'
+        - '[D][E][D]'
+        - '[D][D][D]'
+    entity:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'ITEM_FRAME'
+        - 'ARMOR_STAND'
+    material:
+      listType: 'BLACKLIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'WATER'
+        - 'AIR'
+  7:
+    enabled: true
+    id: 'air_hook'
+    name: '&6Воздушный Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
+    customModelData: 0
+    uses: 10
+    velocityThrow: 1.0
+    velocityPull: 1.0
+    timeBetweenGrapples: 0 # в секундах #
+    fallDamage: false
+    slowFall: false
+    lineBreak: false
+    stickyHook: false
+    recipe:
+      materials:
+        F: 'FISHING_ROD'
+        E: 'FEATHER'
+      shape:
+        - '[E][E][E]'
+        - '[E][F][E]'
+        - '[E][E][E]'
+    entity:
+      listType: 'WHITELIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - ''
+    material:
+      listType: 'WHITELIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'AIR'
+  8:
+    enabled: true
+    id: 'water_hook'
+    name: '&6Водный Крюк'
+    lore:
+      - '&7Осталось использований - &a[uses]'
+    customModelData: 0
+    uses: 100
+    velocityThrow: 1.0
+    velocityPull: 1.0
+    timeBetweenGrapples: 0 # в секундах #
+    fallDamage: false
+    slowFall: false
+    lineBreak: false
+    stickyHook: false
+    recipe:
+      materials:
+        F: 'FISHING_ROD'
+        B: 'WATER_BUCKET'
+      shape:
+        - '[B][B][B]'
+        - '[B][F][B]'
+        - '[B][B][B]'
+    entity:
+      listType: 'WHITELIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - ''
+    material:
+      listType: 'WHITELIST' # варианты: BLACKLIST и WHITELIST
+      list:
+        - 'WATER' 

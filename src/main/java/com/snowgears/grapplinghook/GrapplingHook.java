@@ -1,6 +1,7 @@
 package com.snowgears.grapplinghook;
 
 import com.snowgears.grapplinghook.utils.ConfigUpdater;
+import com.snowgears.grapplinghook.utils.MessageManager;
 import com.snowgears.grapplinghook.utils.RecipeLoader;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -15,9 +16,11 @@ import java.util.Arrays;
 public class GrapplingHook extends JavaPlugin{
 	
 	private GrapplingListener grapplingListener = new GrapplingListener(this);
+	private AnvilListener anvilListener = new AnvilListener(this);
 	private CommandHandler commandHandler;
 	private static GrapplingHook plugin;
 	protected FileConfiguration config;
+	private MessageManager messageManager;
 
 	private boolean usePerms = false;
 	private boolean teleportHooked = false;
@@ -30,6 +33,7 @@ public class GrapplingHook extends JavaPlugin{
 	public void onEnable(){
 		plugin = this;
 		getServer().getPluginManager().registerEvents(grapplingListener, this);
+		getServer().getPluginManager().registerEvents(anvilListener, this);
 		
 		File configFile = new File(this.getDataFolder() + "/config.yml");
 		if(!configFile.exists())
@@ -55,6 +59,9 @@ public class GrapplingHook extends JavaPlugin{
 		useMetrics = config.getBoolean("useMetrics");
 		consumeUseOnSlowfall = config.getBoolean("consumeUseOnSlowfall");
 		commandAlias = config.getString("command");
+		
+		// Инициализируем MessageManager
+		messageManager = new MessageManager(this);
 
 		if(useMetrics){
 			// You can find the plugin ids of your plugins on the page https://bstats.org/what-is-my-plugin-id
@@ -77,9 +84,24 @@ public class GrapplingHook extends JavaPlugin{
 
 	public void reload(){
 		HandlerList.unregisterAll(grapplingListener);
+		HandlerList.unregisterAll(anvilListener);
+		
+		// Перезагружаем MessageManager при перезагрузке плагина
+		if (messageManager != null) {
+			messageManager.reload();
+		}
+		
+		// Перезагружаем RecipeLoader при перезагрузке плагина
+		if (recipeLoader != null) {
+			recipeLoader.reload();
+		}
 
 		onDisable();
 		onEnable();
+	}
+	
+	public MessageManager getMessageManager() {
+		return messageManager;
 	}
 
 	public RecipeLoader getRecipeLoader(){

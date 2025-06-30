@@ -47,9 +47,9 @@ recipes:
         F: 'FISHING_ROD'
         P: 'OAK_PLANKS' # this is all wood planks #
       shape:
-        - '[][P][P]'
-        - '[][F][P]'
-        - '[][][]'
+        - '[P][P][P]'
+        - '[P][F][P]'
+        - '[P][P][P]'
     entity:
       listType: 'BLACKLIST' # options are BLACKLIST and WHITELIST
       list:
@@ -77,12 +77,12 @@ recipes:
     stickyHook: true
     recipe:
       materials:
-        F: 'FISHING_ROD'
+        W: 'wood_hook'
         C: 'COBBLESTONE'
       shape:
-        - '[][C][C]'
-        - '[][F][C]'
-        - '[][][]'
+        - '[C][C][C]'
+        - '[C][W][C]'
+        - '[C][C][C]'
     entity:
       listType: 'BLACKLIST' # options are BLACKLIST and WHITELIST
       list:
@@ -110,12 +110,12 @@ recipes:
     stickyHook: true
     recipe:
       materials:
-        F: 'FISHING_ROD'
+        S: 'stone_hook'
         I: 'IRON_INGOT'
       shape:
-        - '[][I][I]'
-        - '[][F][I]'
-        - '[][][]'
+        - '[I][I][I]'
+        - '[I][S][I]'
+        - '[I][I][I]'
     entity:
       listType: 'BLACKLIST' # options are BLACKLIST and WHITELIST
       list:
@@ -143,12 +143,12 @@ recipes:
     stickyHook: true
     recipe:
       materials:
-        F: 'FISHING_ROD'
+        I: 'iron_hook'
         G: 'GOLD_INGOT'
       shape:
-        - '[][G][G]'
-        - '[][F][G]'
-        - '[][][]'
+        - '[G][G][G]'
+        - '[G][I][G]'
+        - '[G][G][G]'
     entity:
       listType: 'BLACKLIST' # options are BLACKLIST and WHITELIST
       list:
@@ -176,12 +176,12 @@ recipes:
     stickyHook: true
     recipe:
       materials:
-        F: 'FISHING_ROD'
+        G: 'gold_hook'
         E: 'EMERALD'
       shape:
-        - '[][E][E]'
-        - '[][F][E]'
-        - '[][][]'
+        - '[E][E][E]'
+        - '[E][G][E]'
+        - '[E][E][E]'
     entity:
       listType: 'BLACKLIST' # options are BLACKLIST and WHITELIST
       list:
@@ -209,12 +209,12 @@ recipes:
     stickyHook: true
     recipe:
       materials:
-        F: 'FISHING_ROD'
+        E: 'emerald_hook'
         D: 'DIAMOND'
       shape:
-        - '[][D][D]'
-        - '[][F][D]'
-        - '[][][]'
+        - '[D][D][D]'
+        - '[D][E][D]'
+        - '[D][D][D]'
     entity:
       listType: 'BLACKLIST' # options are BLACKLIST and WHITELIST
       list:
@@ -245,9 +245,9 @@ recipes:
         F: 'FISHING_ROD'
         E: 'FEATHER'
       shape:
-        - '[][E][E]'
-        - '[][F][E]'
-        - '[][][]'
+        - '[E][E][E]'
+        - '[E][F][E]'
+        - '[E][E][E]'
     entity:
       listType: 'WHITELIST' # options are BLACKLIST and WHITELIST
       list:
@@ -276,9 +276,9 @@ recipes:
         F: 'FISHING_ROD'
         B: 'WATER_BUCKET'
       shape:
-        - '[][B][B]'
-        - '[][F][B]'
-        - '[][][]'
+        - '[B][B][B]'
+        - '[B][F][B]'
+        - '[B][B][B]'
     entity:
       listType: 'WHITELIST' # options are BLACKLIST and WHITELIST
       list:

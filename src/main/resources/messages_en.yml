@@ -1,0 +1,20 @@
+# English localization for GrapplingHook plugin
+command:
+  not_authorized: "&cYou are not authorized to use this command."
+  reload_success: "&aGrapplingHook has been reloaded."
+  reload_console: "[GrapplingHook] Reloaded plugin."
+  hook_not_found: "&cNo grappling hook found with id: %id%"
+  player_not_found: "&cNo player found online with name: %player%"
+  give_success: "&aGave grappling hook <%id%> to %player%"
+  received_hook: "&a%player% gave you a grappling hook <%id%>"
+  received_hook_console: "&aThe server has given you a grappling hook <%id%>"
+  help_give_self: "/%command% give <hook_id> - give yourself a hook"
+  help_give_other: "/%command% give <hook_id> <player> - give player a hook"
+  help_give_console: "/%command% give <hook_id> <player> - give player a hook"
+
+hook:
+  cooldown: "&7You cannot do that yet."
+  
+anvil:
+  not_enough_xp: "&cYou don't have enough experience to repair this hook."
+  repair_success: "&aHook successfully repaired!" 

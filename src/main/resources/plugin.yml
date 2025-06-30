@@ -1,8 +1,8 @@
 name: GrapplingHook
 author: SnowGears
 description: A simple grappling hook plugin.
-version: 1.6.5
-api-version: 1.14
+version: 1.7.0
+api: ["1.14"]
 main: com.snowgears.grapplinghook.GrapplingHook
 permissions:
     grapplinghook.pull.self:

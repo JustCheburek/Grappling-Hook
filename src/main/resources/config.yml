@@ -14,3 +14,6 @@ consumeUseOnSlowfall: false
 
 # Change this to change the base command alias for the plugin #
 command: 'gh'
+
+# Language setting (en, ru) #
+language: 'en'
