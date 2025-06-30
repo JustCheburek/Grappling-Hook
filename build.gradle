@@ -1,12 +1,21 @@
 plugins {
   id 'com.github.johnrengelman.shadow' version '8.1.1'
   id 'java-library'
+  id 'eclipse'
+  id 'idea'
+}
+
+// Устанавливаем совместимость с Java 24 для Gradle
+wrapper {
+  gradleVersion = '8.7'
+  distributionType = Wrapper.DistributionType.BIN
 }
 
 version = project.version
 
 configurations {
   shade
+  compileOnly.extendsFrom annotationProcessor
 }
 
 repositories {
@@ -27,10 +36,14 @@ repositories {
     name = 'bstats'
     url = 'https://repo.codemc.org/repository/maven-public'
   }
+  maven {
+    name = 'gradle-plugins'
+    url = 'https://plugins.gradle.org/m2/'
+  }
 }
 
 dependencies {
-  compileOnly 'org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT'
+  api 'org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT'
   
   // Optional: bStats for metrics
   implementation 'org.bstats:bstats-bukkit:3.0.2'
@@ -43,6 +56,9 @@ dependencies {
 java {
   sourceCompatibility = JavaVersion.VERSION_17
   targetCompatibility = JavaVersion.VERSION_17
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
 }
 
 shadowJar {
@@ -60,19 +76,58 @@ processResources {
   def props = [version: version]
   inputs.properties props
   filteringCharset 'UTF-8'
+  
+  // Устанавливаем стратегию обработки дубликатов
+  duplicatesStrategy = DuplicatesStrategy.INCLUDE
+  
+  // Обрабатываем только plugin.yml для подстановки версии
   filesMatching('plugin.yml') {
     expand props
   }
 }
 
-build {
-  dependsOn shadowJar
+// Настройка IDE
+eclipse {
+  classpath {
+    downloadSources = true
+  }
 }
 
-test {
+idea {
+  module {
+    downloadSources = true
+    downloadJavadoc = true
+  }
+}
+
+// Настройка для компиляции
+tasks.withType(JavaCompile).configureEach {
+  // Убираем аргумент --release, так как используем sourceCompatibility и targetCompatibility
+  // options.compilerArgs += ['--release', '17']
+}
+
+// Обновляем настройку для запуска тестов
+tasks.withType(Test).configureEach {
   useJUnitPlatform()
   testLogging {
     events "passed", "skipped", "failed"
     showStandardStreams = true
   }
 }
+
+// Обновляем настройку для задачи build
+build {
+  dependsOn shadowJar
+}
+
+// Добавляем задачу для проверки версии Java
+task checkJavaVersion {
+  doLast {
+    println "Java version: ${System.getProperty('java.version')}"
+    println "JVM version: ${System.getProperty('java.vm.version')}"
+    println "JDK version: ${System.getProperty('java.specification.version')}"
+  }
+}
+
+// Запускаем проверку версии Java перед сборкой
+tasks.build.dependsOn checkJavaVersion

@@ -27,7 +27,15 @@ public class RecipeLoader {
 
     public RecipeLoader(GrapplingHook plugin){
         this.plugin = plugin;
-        this.recipesFile = new File(plugin.getDataFolder(), "recipes.yml");
+        // Используем локализованное имя файла
+        String locale = plugin.getConfig().getString("language", "en");
+        this.recipesFile = new File(plugin.getDataFolder(), "recipes_" + locale + ".yml");
+        
+        // Если файл не существует, пытаемся использовать английскую версию
+        if (!recipesFile.exists()) {
+            this.recipesFile = new File(plugin.getDataFolder(), "recipes_en.yml");
+            plugin.getLogger().log(Level.INFO, "Recipes file for locale " + locale + " not found, using English version");
+        }
         
         // Загружаем локализованные рецепты
         loadLocalizedRecipes();
@@ -43,15 +51,41 @@ public class RecipeLoader {
             localizedRecipes = YamlConfiguration.loadConfiguration(localizedRecipesFile);
             plugin.getLogger().log(Level.INFO, "Loaded localized recipes for " + locale);
         } else {
-            // Если локализованного файла нет, используем стандартный
-            localizedRecipes = null;
-            plugin.getLogger().log(Level.INFO, "No localized recipes found for " + locale + ", using default");
+            // Пробуем загрузить из ресурсов
+            InputStream defaultStream = plugin.getResource("recipes_" + locale + ".yml");
+            if (defaultStream != null) {
+                localizedRecipes = YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(defaultStream, StandardCharsets.UTF_8));
+                plugin.getLogger().log(Level.INFO, "Loaded localized recipes from resources for " + locale);
+                
+                // Сохраняем файл в директорию плагина для будущего использования
+                try {
+                    plugin.saveResource("recipes_" + locale + ".yml", false);
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING, "Could not save localized recipes file: " + e.getMessage());
+                }
+            } else {
+                // Если локализованного файла нет, используем стандартный
+                localizedRecipes = null;
+                plugin.getLogger().log(Level.INFO, "No localized recipes found for " + locale + ", using default");
+            }
         }
     }
     
     public void reload() {
         unloadRecipes();
         hookItems.clear();
+        
+        // Обновляем путь к файлу рецептов
+        String locale = plugin.getConfig().getString("language", "en");
+        this.recipesFile = new File(plugin.getDataFolder(), "recipes_" + locale + ".yml");
+        
+        // Если файл не существует, пытаемся использовать английскую версию
+        if (!recipesFile.exists()) {
+            this.recipesFile = new File(plugin.getDataFolder(), "recipes_en.yml");
+            plugin.getLogger().log(Level.INFO, "Recipes file for locale " + locale + " not found, using English version");
+        }
+        
         loadLocalizedRecipes();
         loadRecipes();
     }

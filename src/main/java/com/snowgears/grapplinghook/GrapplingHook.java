@@ -47,10 +47,23 @@ public class GrapplingHook extends JavaPlugin{
         }
 		config = YamlConfiguration.loadConfiguration(configFile);
 
-		File recipeConfigFile = new File(getDataFolder(), "recipes.yml");
+		// Сохраняем все необходимые ресурсы
+		saveResources();
+
+		// Проверяем наличие файла рецептов для текущей локали
+		String locale = config.getString("language", "en");
+		File recipeConfigFile = new File(getDataFolder(), "recipes_" + locale + ".yml");
 		if (!recipeConfigFile.exists()) {
 			recipeConfigFile.getParentFile().mkdirs();
-			this.copy(getResource("recipes.yml"), recipeConfigFile);
+			// Пробуем загрузить локализованный файл из ресурсов
+			if (getResource("recipes_" + locale + ".yml") != null) {
+				this.saveResource("recipes_" + locale + ".yml", false);
+			} else {
+				// Если локализованного файла нет, используем английский
+				if (getResource("recipes_en.yml") != null) {
+					this.copy(getResource("recipes_en.yml"), recipeConfigFile);
+				}
+			}
 		}
 		recipeLoader = new RecipeLoader(plugin);
 		
@@ -76,6 +89,39 @@ public class GrapplingHook extends JavaPlugin{
 		}
 
 		commandHandler = new CommandHandler(this, "grapplinghook.operator", commandAlias, "Base command for the GrapplingHook plugin", "/gh", new ArrayList(Arrays.asList(commandAlias)));
+	}
+
+	/**
+	 * Сохраняет все необходимые ресурсы плагина
+	 */
+	private void saveResources() {
+		// Получаем текущую локаль из конфига
+		String locale = config.getString("language", "en");
+		
+		// Сохраняем основные файлы ресурсов
+		saveResourceIfNotExists("recipes_en.yml");
+		saveResourceIfNotExists("messages_en.yml");
+		
+		// Сохраняем локализованные файлы, если они существуют
+		if (!locale.equals("en")) {
+			saveResourceIfNotExists("messages_" + locale + ".yml");
+			saveResourceIfNotExists("recipes_" + locale + ".yml");
+		}
+	}
+	
+	/**
+	 * Сохраняет ресурс, если он еще не существует в директории плагина
+	 * @param resourceName имя ресурса
+	 */
+	private void saveResourceIfNotExists(String resourceName) {
+		File resourceFile = new File(getDataFolder(), resourceName);
+		if (!resourceFile.exists()) {
+			try {
+				saveResource(resourceName, false);
+			} catch (Exception e) {
+				getLogger().warning("Could not save resource: " + resourceName);
+			}
+		}
 	}
 
 	public void onDisable(){
