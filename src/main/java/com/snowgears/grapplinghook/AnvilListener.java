@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class AnvilListener implements Listener {
 
@@ -81,24 +83,31 @@ public class AnvilListener implements Listener {
         ItemMeta meta = repairedHook.getItemMeta();
         PersistentDataContainer container = meta.getPersistentDataContainer();
         
-        // Получаем текущее количество использований
-        int currentUses = container.getOrDefault(new NamespacedKey(plugin, "uses"), PersistentDataType.INTEGER, 0);
+        // Полностью восстанавливаем количество использований до максимального значения из конфига
         int maxUses = hookSettings.getMaxUses();
         
-        // Определяем, сколько использований восстановить (1 материал = 25% от максимума)
-        int repairAmount = Math.max(1, maxUses / 4);
-        int newUses = Math.min(maxUses, currentUses + repairAmount);
-        
         // Обновляем количество использований
-        container.set(new NamespacedKey(plugin, "uses"), PersistentDataType.INTEGER, newUses);
+        container.set(new NamespacedKey(plugin, "uses"), PersistentDataType.INTEGER, maxUses);
         
         // Обновляем лор с новым количеством использований
         List<String> lore = meta.getLore();
         if (lore != null && !lore.isEmpty()) {
             List<String> newLore = new ArrayList<>();
+            
+            // Регулярное выражение для поиска строки с количеством использований
+            Pattern pattern = Pattern.compile(".*\\[uses\\].*");
+            
             for (String line : lore) {
-                newLore.add(line.replace("[uses]", String.valueOf(newUses)));
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.matches()) {
+                    // Это строка с плейсхолдером [uses]
+                    newLore.add(line.replaceAll("\\[uses\\]", String.valueOf(maxUses)));
+                } else {
+                    // Это другая строка, просто добавляем её
+                    newLore.add(line);
+                }
             }
+            
             meta.setLore(newLore);
         }
         
