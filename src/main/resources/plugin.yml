@@ -4,7 +4,7 @@ description: A simple grappling hook plugin.
 version: ${version}
 api: '1.13'
 main: com.snowgears.grapplinghook.GrapplingHook
-api-version: '1.13'
+api-version: '1.20'
 commands:
   gh:
     description: Main command for GrapplingHook plugin

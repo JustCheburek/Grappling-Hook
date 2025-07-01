@@ -1,19 +1,32 @@
 @echo off
-REM Скрипт сборки для GrapplingHook
-REM Автоматически использует Java 17 для сборки
+echo Сборка плагина GrapplingHook...
 
-REM Сохраняем текущую переменную JAVA_HOME
-set OLD_JAVA_HOME=%JAVA_HOME%
+REM Создаем директории для выходных файлов
+mkdir build\classes 2>nul
+mkdir build\libs 2>nul
 
-REM Устанавливаем JAVA_HOME на путь к Java 17
-set JAVA_HOME=C:\Program Files\Java\jdk-17
+REM Компилируем исходные файлы
+echo Компиляция исходных файлов...
+javac -d build\classes src\main\java\com\snowgears\grapplinghook\*.java src\main\java\com\snowgears\grapplinghook\api\*.java src\main\java\com\snowgears\grapplinghook\utils\*.java
 
-echo Используем Java 17 для сборки...
+if %ERRORLEVEL% neq 0 (
+    echo Ошибка при компиляции исходных файлов
+    exit /b 1
+)
 
-REM Запускаем сборку
-call gradlew clean build
+REM Копируем ресурсы
+echo Копирование ресурсов...
+xcopy /s /y src\main\resources\*.* build\classes\ 2>nul
 
-REM Восстанавливаем исходную переменную JAVA_HOME
-set JAVA_HOME=%OLD_JAVA_HOME%
+REM Создаем JAR файл
+echo Создание JAR файла...
+cd build\classes
+jar -cf ..\libs\GrapplingHook.jar .
+cd ..\..
 
-echo Сборка завершена. JAR-файл находится в build/libs/GrapplingHook.jar 
+if exist build\libs\GrapplingHook.jar (
+    echo Сборка завершена успешно. JAR файл создан: build\libs\GrapplingHook.jar
+) else (
+    echo Ошибка: JAR файл не был создан
+    exit /b 1
+) 

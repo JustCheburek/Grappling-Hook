@@ -102,6 +102,14 @@ public class RecipeLoader {
                 boolean stickyHook = config.getBoolean("recipes." + recipeNumber + ".stickyHook");
                 int customModelData = config.getInt("recipes." + recipeNumber + ".customModelData", 0);
 
+                // Устанавливаем CustomModelData из конфигурации
+                int configCustomModelData = getCustomModelData(id);
+                if (configCustomModelData > 0) {
+                    // Используем значение из конфигурации вместо значения из рецепта
+                    customModelData = configCustomModelData;
+                    plugin.getLogger().info("Using CustomModelData from config for " + id + ": " + customModelData);
+                }
+
                 HookSettings hookSettings = new HookSettings(id, uses, velocityThrow, velocityPull, timeBetweenGrapples, fallDamage, slowFall, lineBreak, stickyHook, customModelData);
 
                 try {
@@ -174,7 +182,7 @@ public class RecipeLoader {
                 hookItemMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);
                 hookItemMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
                 hookItemMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
-                hookItemMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_POTION_EFFECTS);
+                hookItemMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
 
                 PersistentDataContainer persistentData = hookItemMeta.getPersistentDataContainer();
                 persistentData.set(new NamespacedKey(plugin, "uses"), PersistentDataType.INTEGER, uses);
@@ -343,5 +351,28 @@ public class RecipeLoader {
         // Переводим цветовые коды
         unformattedString = ChatColor.translateAlternateColorCodes('&', unformattedString);
         return unformattedString;
+    }
+
+    /**
+     * Получает значение CustomModelData из конфигурации для указанного ID крюка
+     * @param hookId ID крюка
+     * @return значение CustomModelData или 0, если не найдено
+     */
+    public int getCustomModelData(String hookId) {
+        if (hookId == null) {
+            return 0;
+        }
+        
+        // Проверяем, включены ли кастомные модели в конфигурации
+        if (!plugin.getConfig().getBoolean("custom_models.enabled", false)) {
+            return 0;
+        }
+        
+        // Получаем значение CustomModelData из конфигурации
+        int customModelData = plugin.getConfig().getInt("custom_models." + hookId, 0);
+        
+        plugin.getLogger().info("Loaded CustomModelData for hook " + hookId + ": " + customModelData);
+        
+        return customModelData;
     }
 }

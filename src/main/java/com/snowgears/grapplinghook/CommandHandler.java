@@ -85,6 +85,35 @@ public class CommandHandler extends BukkitCommand {
                     sender.sendMessage(plugin.getMessageManager().getMessage("anvil.repair_info"));
                 }
                 return true;
+            } else if (args[0].equalsIgnoreCase("test")) {
+                // Команда для выдачи деревянного крюка для тестирования
+                if (sender instanceof Player) {
+                    Player player = (Player) sender;
+                    // Проверяем права
+                    if ((plugin.usePerms() && !player.hasPermission("grapplinghook.operator")) || (!plugin.usePerms() && !player.isOp())) {
+                        player.sendMessage(plugin.getMessageManager().getCommandMessage("not_authorized"));
+                        return true;
+                    }
+                    
+                    // Выдаем деревянный крюк
+                    String hookID = "wood_hook";
+                    HookSettings hookSettings = plugin.getGrapplingListener().getHookSettings(hookID);
+                    if(hookSettings == null){
+                        Map<String, String> placeholders = new HashMap<>();
+                        placeholders.put("id", hookID);
+                        player.sendMessage(plugin.getMessageManager().getCommandMessage("hook_not_found", placeholders));
+                        return true;
+                    }
+                    player.getInventory().addItem(hookSettings.getHookItem());
+                    Map<String, String> placeholders = new HashMap<>();
+                    placeholders.put("id", hookID);
+                    placeholders.put("player", player.getName());
+                    player.sendMessage(plugin.getMessageManager().getCommandMessage("give_success", placeholders));
+                    return true;
+                } else {
+                    sender.sendMessage("§cЭта команда может быть выполнена только игроком.");
+                    return true;
+                }
             }
         } else if (args.length == 2) {
             if (args[0].equalsIgnoreCase("give")) {
@@ -206,6 +235,7 @@ public class CommandHandler extends BukkitCommand {
                 results.add("give");
                 results.add("reload");
                 results.add("info");
+                results.add("test");
             }
             return sortedResults(args[0], results);
         }

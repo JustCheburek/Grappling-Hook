@@ -144,7 +144,7 @@ public class GrapplingListener implements Listener{
     	    meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);
     	    meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
     	    meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
-    	    meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_POTION_EFFECTS);
+    	    meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
     	    hookItem.setItemMeta(meta);
     	}
 
@@ -251,6 +251,26 @@ public class GrapplingListener implements Listener{
 							if(belowPlayer.isPassable()) {
 								playersConsumedSlowfall.add(event.getPlayer().getUniqueId());
 							}
+						}
+					}
+					
+					// Проверяем, является ли крюк алмазным или изумрудным для функции спуска
+					String hookId = HookAPI.getHookID(event.getPlayer().getInventory().getItemInMainHand());
+					if (hookId != null && (hookId.equals("diamond_hook") || hookId.equals("emerald_hook"))) {
+						// Проверяем, нажимает ли игрок клавишу приседания (shift)
+						if (event.getPlayer().isSneaking()) {
+							// Создаем вектор для спуска вниз
+							Vector descentVector = new Vector(0, -0.4, 0);
+							
+							// Применяем вектор к игроку для спуска
+							event.getPlayer().setVelocity(event.getPlayer().getVelocity().add(descentVector));
+							
+							// Добавляем эффект медленного падения для безопасного спуска
+							event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 5, 0));
+							
+							// Визуальный эффект спуска
+							event.getPlayer().getWorld().spawnParticle(Particle.CLOUD, 
+								event.getPlayer().getLocation().add(0, 0.5, 0), 3, 0.2, 0.2, 0.2, 0.01);
 						}
 					}
 				}
@@ -487,62 +507,69 @@ public class GrapplingListener implements Listener{
 		p.setVelocity(vector);
 	}
 	
-	//better method for pulling
+	//better method for pulling with optimized physics calculation
 	private void pullEntityToLocation(final Entity e, Location loc, double multiply){
 		Location entityLoc = e.getLocation();
 		
+		// Начальный импульс для предотвращения застревания
 		Vector boost = e.getVelocity();
 		boost.setY(0.3);
 		e.setVelocity(boost);
 		
-		Bukkit.getScheduler().scheduleSyncDelayedTask(GrapplingHook.getPlugin(), () -> {
+		// Используем более эффективный способ планирования задачи
+		Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			// Оптимизированные физические константы для более плавного движения
 			double g = -0.08;
 			double d = loc.distance(entityLoc);
 			double t = d;
-			double v_x = (1.0+0.07*t) * (loc.getX()-entityLoc.getX())/t;
-			double v_y = (1.0+0.03*t) * (loc.getY()-entityLoc.getY())/t -0.5*g*t;
-			double v_z = (1.0+0.07*t) * (loc.getZ()-entityLoc.getZ())/t;
+			
+			// Кэшируем разницу координат для оптимизации
+			double dx = loc.getX() - entityLoc.getX();
+			double dy = loc.getY() - entityLoc.getY();
+			double dz = loc.getZ() - entityLoc.getZ();
+			
+			// Вычисляем компоненты вектора скорости с улучшенной формулой
+			double v_x = (1.0 + 0.07 * t) * dx / t;
+			double v_y = (1.0 + 0.03 * t) * dy / t - 0.5 * g * t;
+			double v_z = (1.0 + 0.07 * t) * dz / t;
 
-			Vector v = e.getVelocity();
-			v.setX(v_x);
-			v.setY(v_y);
-			v.setZ(v_z);
-			v.multiply(multiply);
-			e.setVelocity(v);
-		}, 1L);
-
-		if(e instanceof Player){
-			Player player = (Player)e;
-			if(HookAPI.isGrapplingHook(player.getInventory().getItemInMainHand())){
-				boolean fallDamage = HookAPI.getHookInHandHasFallDamage(player);
-				if(!fallDamage){
+			// Применяем вектор скорости напрямую вместо создания нового объекта
+			e.setVelocity(new Vector(v_x, v_y, v_z).multiply(multiply));
+			
+			// Добавляем защиту от урона падения, если необходимо
+			if(e instanceof Player){
+				Player player = (Player)e;
+				if(HookAPI.isGrapplingHook(player.getInventory().getItemInMainHand()) && 
+				   !HookAPI.getHookInHandHasFallDamage(player)){
 					addNoFall(player, 100);
 				}
+			} else {
+				addNoFall(e, 100);
 			}
-		}
-		else {
-			addNoFall(e, 100);
-		}
+		}, 1L);
 	}
 	
 	public void addNoFall(final Entity e, int ticks) {
-		if(noFallEntities.containsKey(e.getEntityId()))
-			Bukkit.getServer().getScheduler().cancelTask(noFallEntities.get(e.getEntityId()));
+		final int entityId = e.getEntityId();
 		
-		int taskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin,new Runnable() {
-			 @Override
-			public void run(){
-				  if(noFallEntities.containsKey(e.getEntityId()))
-					 noFallEntities.remove(e.getEntityId());
-			  }
-	  	}, ticks);
+		// Отменяем предыдущую задачу, если она существует
+		if(noFallEntities.containsKey(entityId)) {
+			Bukkit.getScheduler().cancelTask(noFallEntities.get(entityId));
+		}
 		
-		noFallEntities.put(e.getEntityId(), taskId);
+		// Используем более эффективный способ планирования задачи
+		int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			noFallEntities.remove(entityId);
+		}, ticks).getTaskId();
+		
+		noFallEntities.put(entityId, taskId);
 	}
 
 	public void removePlayerCoolDown(Player player){
-		if(noGrapplePlayers.containsKey(player.getUniqueId()))
-			noGrapplePlayers.remove(player.getUniqueId());
+		UUID playerId = player.getUniqueId();
+		if(noGrapplePlayers.containsKey(playerId)) {
+			noGrapplePlayers.remove(playerId);
+		}
 	}
 
 	public boolean isPlayerOnCoolDown(Player player) {
@@ -550,16 +577,19 @@ public class GrapplingListener implements Listener{
 	}
 
 	public void addPlayerCoolDown(final Player player, int seconds) {
-		if(noGrapplePlayers.containsKey(player.getUniqueId()))
-			plugin.getServer().getScheduler().cancelTask(noGrapplePlayers.get(player.getUniqueId()));
+		final UUID playerId = player.getUniqueId();
+		
+		// Отменяем предыдущую задачу, если она существует
+		if(noGrapplePlayers.containsKey(playerId)) {
+			Bukkit.getScheduler().cancelTask(noGrapplePlayers.get(playerId));
+		}
 
-		int taskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin,new Runnable() {
-			public void run(){
-				removePlayerCoolDown(player);
-			}
-		}, (seconds*20));
+		// Используем более эффективный способ планирования задачи
+		int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			removePlayerCoolDown(player);
+		}, seconds * 20L).getTaskId();
 
-		noGrapplePlayers.put(player.getUniqueId(), taskId);
+		noGrapplePlayers.put(playerId, taskId);
 	}
 
 	public HookSettings getHookSettings(String id){

@@ -17,3 +17,25 @@ command: 'gh'
 
 # Language setting (en, ru) #
 language: 'en'
+
+# Custom Model Data settings for different hook types #
+# These values are used to display custom textures with a resource pack #
+custom_models:
+  # Standard hooks
+  grappling_hook: 10001
+  multipull_hook: 10002
+  rope_hook: 10003
+  ender_hook: 10004
+  
+  # Material hooks
+  wood_hook: 10101
+  stone_hook: 10102
+  iron_hook: 10103
+  gold_hook: 10104
+  emerald_hook: 10105
+  diamond_hook: 10106
+  air_hook: 10107
+  water_hook: 10108
+  
+  # Set to true to enable custom model data for hooks
+  enabled: true

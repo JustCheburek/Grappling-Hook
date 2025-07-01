@@ -87,10 +87,11 @@ public class GrapplingHook extends JavaPlugin{
 			if(useMetrics){
 				try {
 					int pluginId = 9957;
-					Metrics metrics = new Metrics(this, pluginId);
+					new Metrics(this, pluginId);
 					getLogger().info("Metrics initialized");
 				} catch(Exception e) {
 					getLogger().warning("Failed to initialize metrics: " + e.getMessage());
+					e.printStackTrace();
 				}
 			}
 			

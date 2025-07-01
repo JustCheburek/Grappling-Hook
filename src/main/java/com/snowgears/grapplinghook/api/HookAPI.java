@@ -273,13 +273,19 @@ public final class HookAPI {
 					
 					if (oldLore != null) {
 						for(String loreLine : oldLore){
+							// Пропускаем строки, содержащие "Крюк сломан" или "Hook broken"
+							if (loreLine.contains("Крюк сломан") || loreLine.contains("Hook broken")) {
+								continue;
+							}
+							
 							// Заменяем все упоминания использований на 0
 							String modifiedLine = loreLine;
 							// Заменяем [uses] на 0
-							modifiedLine = modifiedLine.replace("[uses]", "0");
+							modifiedLine = modifiedLine.replace("[uses]", String.valueOf(0));
 							// Заменяем числа в строках, содержащих "Uses left" или "uses left"
 							if (modifiedLine.contains("Uses left") || modifiedLine.contains("uses left")) {
-								modifiedLine = modifiedLine.replaceAll("\\d+", "0");
+								// Изменяем цвет текста на красный, а цифры на темно-красный
+								modifiedLine = ChatColor.RED + "Uses left: " + ChatColor.DARK_RED + "0";
 							}
 							newLore.add(modifiedLine);
 						}
@@ -287,7 +293,7 @@ public final class HookAPI {
 						newLore = new ArrayList<>();
 					}
 					
-					// Добавляем строку о том, что крюк сломан
+					// Добавляем строку о том, что крюк сломан только если uses = 0
 					newLore.add(ChatColor.RED + "Крюк сломан!");
 					im.setLore(newLore);
 
@@ -309,6 +315,11 @@ public final class HookAPI {
 					
 					if (oldLore != null) {
 						for(String loreLine : oldLore){
+							// Пропускаем строки, содержащие "Крюк сломан" или "Hook broken"
+							if (loreLine.contains("Крюк сломан") || loreLine.contains("Hook broken")) {
+								continue;
+							}
+							
 							// Заменяем [uses] на новое значение
 							String modifiedLine = loreLine.replace("[uses]", String.valueOf(newUses));
 							

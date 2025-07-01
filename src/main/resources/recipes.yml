@@ -28,13 +28,14 @@
 # [uses] - tag that will display the uses left on the grappling hook item #
 recipes:
   1:
-    enabled: true
-    id: 'wood_hook'
-    name: '&6Wood Grappling Hook'
+    enabled: false # Первый крюк можно найти только в сундуках
+    id: 'grappling_hook'
+    name: '&6Grappling Hook'
     lore:
       - '&7Uses left - &a[uses]'
+      - '&8Найден в сундуке'
     customModelData: 0
-    uses: 5
+    uses: 50 # Увеличено с 5 до 50
     velocityThrow: 1.0
     velocityPull: 1.0
     timeBetweenGrapples: 0 # in seconds #
@@ -62,15 +63,50 @@ recipes:
         - 'AIR'
   2:
     enabled: true
+    id: 'wood_hook'
+    name: '&6Wood Grappling Hook'
+    lore:
+      - '&7Uses left - &a[uses]'
+      - '&8Базовый крюк'
+    customModelData: 0
+    uses: 100 # Увеличено с 5 до 100
+    velocityThrow: 1.0
+    velocityPull: 1.0
+    timeBetweenGrapples: 3 # in seconds #
+    fallDamage: false
+    slowFall: true
+    lineBreak: true
+    stickyHook: true
+    recipe:
+      materials:
+        F: 'FISHING_ROD'
+        P: 'OAK_PLANKS' # this is all wood planks #
+      shape:
+        - '[P][P][P]'
+        - '[P][F][P]'
+        - '[P][P][P]'
+    entity:
+      listType: 'BLACKLIST' # options are BLACKLIST and WHITELIST
+      list:
+        - 'ITEM_FRAME'
+        - 'ARMOR_STAND'
+    material:
+      listType: 'BLACKLIST' # options are BLACKLIST and WHITELIST
+      list:
+        - 'WATER'
+        - 'AIR'
+  3:
+    enabled: true
     id: 'stone_hook'
     name: '&6Stone Grappling Hook'
     lore:
       - '&7Uses left - &a[uses]'
+      - '&8Улучшенная прочность'
     customModelData: 0
-    uses: 10
-    velocityThrow: 1.0
-    velocityPull: 1.0
-    timeBetweenGrapples: 0 # in seconds #
+    uses: 250 # Увеличено с 10 до 250
+    velocityThrow: 1.2 # Увеличено с 1.0 до 1.2
+    velocityPull: 1.2 # Увеличено с 1.0 до 1.2
+    timeBetweenGrapples: 2 # in seconds #
     fallDamage: false
     slowFall: true
     lineBreak: true
@@ -93,17 +129,18 @@ recipes:
       list:
         - 'WATER'
         - 'AIR'
-  3:
+  4:
     enabled: true
     id: 'iron_hook'
     name: '&6Iron Grappling Hook'
     lore:
       - '&7Uses left - &a[uses]'
+      - '&8Быстрая перезарядка'
     customModelData: 0
-    uses: 20
-    velocityThrow: 1.0
-    velocityPull: 1.0
-    timeBetweenGrapples: 0 # in seconds #
+    uses: 500 # Увеличено с 20 до 500
+    velocityThrow: 1.5 # Увеличено с 1.0 до 1.5
+    velocityPull: 1.5 # Увеличено с 1.0 до 1.5
+    timeBetweenGrapples: 1 # in seconds #
     fallDamage: false
     slowFall: true
     lineBreak: true
@@ -126,16 +163,17 @@ recipes:
       list:
         - 'WATER'
         - 'AIR'
-  4:
+  5:
     enabled: true
     id: 'gold_hook'
     name: '&6Gold Grappling Hook'
     lore:
       - '&7Uses left - &a[uses]'
+      - '&8Высокая скорость'
     customModelData: 0
-    uses: 25
-    velocityThrow: 1.0
-    velocityPull: 1.0
+    uses: 750 # Увеличено с 25 до 750
+    velocityThrow: 2.0 # Увеличено с 1.0 до 2.0
+    velocityPull: 2.0 # Увеличено с 1.0 до 2.0
     timeBetweenGrapples: 0 # in seconds #
     fallDamage: false
     slowFall: true
@@ -159,20 +197,22 @@ recipes:
       list:
         - 'WATER'
         - 'AIR'
-  5:
+  6:
     enabled: true
     id: 'emerald_hook'
     name: '&6Emerald Grappling Hook'
     lore:
       - '&7Uses left - &a[uses]'
+      - '&8Спуск с возвышенностей'
+      - '&8Максимальная скорость'
     customModelData: 0
-    uses: 40
-    velocityThrow: 1.0
-    velocityPull: 1.0
+    uses: 1500 # Увеличено с 40 до 1500
+    velocityThrow: 2.5 # Увеличено с 1.0 до 2.5
+    velocityPull: 2.5 # Увеличено с 1.0 до 2.5
     timeBetweenGrapples: 0 # in seconds #
     fallDamage: false
     slowFall: true
-    lineBreak: true
+    lineBreak: false # Изменено с true на false для возможности спуска
     stickyHook: true
     recipe:
       materials:
@@ -192,20 +232,23 @@ recipes:
       list:
         - 'WATER'
         - 'AIR'
-  6:
+  7:
     enabled: true
     id: 'diamond_hook'
     name: '&6Diamond Grappling Hook'
     lore:
       - '&7Uses left - &a[uses]'
+      - '&8Спуск с возвышенностей'
+      - '&8Бесконечная прочность'
+      - '&8Максимальная мощность'
     customModelData: 0
-    uses: 100
-    velocityThrow: 1.0
-    velocityPull: 1.0
+    uses: 5000 # Увеличено с 100 до 5000
+    velocityThrow: 3.0 # Увеличено с 1.0 до 3.0
+    velocityPull: 3.0 # Увеличено с 1.0 до 3.0
     timeBetweenGrapples: 0 # in seconds #
     fallDamage: false
     slowFall: true
-    lineBreak: true
+    lineBreak: false # Изменено с true на false для возможности спуска
     stickyHook: true
     recipe:
       materials:
@@ -225,16 +268,17 @@ recipes:
       list:
         - 'WATER'
         - 'AIR'
-  7:
+  8:
     enabled: true
     id: 'air_hook'
     name: '&6Air Grappling Hook'
     lore:
       - '&7Uses left - &a[uses]'
+      - '&8Специальный крюк для воздуха'
     customModelData: 0
-    uses: 10
-    velocityThrow: 1.0
-    velocityPull: 1.0
+    uses: 200 # Увеличено с 10 до 200
+    velocityThrow: 1.5 # Увеличено с 1.0 до 1.5
+    velocityPull: 1.5 # Увеличено с 1.0 до 1.5
     timeBetweenGrapples: 0 # in seconds #
     fallDamage: false
     slowFall: false
@@ -256,16 +300,17 @@ recipes:
       listType: 'WHITELIST' # options are BLACKLIST and WHITELIST
       list:
         - 'AIR'
-  8:
+  9:
     enabled: true
     id: 'water_hook'
     name: '&6Water Grappling Hook'
     lore:
       - '&7Uses left - &a[uses]'
+      - '&8Специальный крюк для воды'
     customModelData: 0
-    uses: 100
-    velocityThrow: 1.0
-    velocityPull: 1.0
+    uses: 500 # Увеличено с 100 до 500
+    velocityThrow: 1.5 # Увеличено с 1.0 до 1.5
+    velocityPull: 1.5 # Увеличено с 1.0 до 1.5
     timeBetweenGrapples: 0 # in seconds #
     fallDamage: false
     slowFall: false
