@@ -133,7 +133,20 @@ public class GrapplingListener implements Listener{
     		return;
     	final Player player = event.getPlayer();
     	
-    	event.getHookItem().setDurability((short)-10);
+    	// Устанавливаем максимальную прочность удочки (бесконечная)
+    	event.getHookItem().setDurability((short)0);
+    	// Устанавливаем неразрушимость предмета
+    	ItemStack hookItem = event.getHookItem();
+    	if (hookItem.getItemMeta() != null) {
+    	    org.bukkit.inventory.meta.ItemMeta meta = hookItem.getItemMeta();
+    	    meta.setUnbreakable(true);
+    	    // Скрываем информацию о рецептах и другие атрибуты
+    	    meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);
+    	    meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
+    	    meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+    	    meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_POTION_EFFECTS);
+    	    hookItem.setItemMeta(meta);
+    	}
 
 		if(activeHookEntities.containsKey(player.getUniqueId())){
 			activeHookEntities.remove(player.getUniqueId());
@@ -261,13 +274,18 @@ public class GrapplingListener implements Listener{
 					//only secure the sticky hook to the block if that block type can be hit by this hook
 					if(HookAPI.canHookMaterial(player, hitblock.getBlock().getType())) {
 						ArmorStand armorStand = player.getWorld().spawn(hitblock, ArmorStand.class);
-						armorStand.addPassenger(fishHook);
-						armorStand.setGravity(false);
+						// Делаем стойку полностью невидимой
 						armorStand.setVisible(false);
+						armorStand.setInvisible(true); // Добавляем эффект невидимости
 						armorStand.setSmall(true);
 						armorStand.setArms(false);
 						armorStand.setMarker(true);
 						armorStand.setBasePlate(false);
+						armorStand.setGravity(false);
+						armorStand.setSilent(true); // Убираем звуки
+						armorStand.setCustomNameVisible(false);
+						armorStand.addPassenger(fishHook);
+						
 						fishHook.setGravity(false);
 						fishHook.setBounce(true);
 						fishHook.setMetadata("stuckBlock", new FixedMetadataValue(plugin, ""));
@@ -280,137 +298,134 @@ public class GrapplingListener implements Listener{
     @EventHandler (priority = EventPriority.HIGHEST)
     public void fishEvent(PlayerFishEvent event) //called before projectileLaunchEvent
     {
-    	//System.out.println(event.getState().name());
-        Player player = event.getPlayer();
+    	try {
+			if(event.getState() == PlayerFishEvent.State.IN_GROUND || event.getState() == PlayerFishEvent.State.CAUGHT_ENTITY){
+				Player player = event.getPlayer();
 
-        if(HookAPI.isGrapplingHook(player.getInventory().getItemInMainHand()) == false)
-        	return;
-
-		if(event.getState() == org.bukkit.event.player.PlayerFishEvent.State.IN_GROUND  || event.getState() == org.bukkit.event.player.PlayerFishEvent.State.FAILED_ATTEMPT || event.getHook().hasMetadata("stuckBlock")) {
-
-			Location loc = event.getHook().getLocation();
-
-			boolean activeStickyHook = event.getHook().hasMetadata("stuckBlock");
-			if(event.getHook().hasMetadata("stuckBlock")) {
-				event.getHook().removeMetadata("stuckBlock", plugin);
-				event.getHook().getVehicle().remove();
-			}
-
-			if(plugin.usePerms() == false || player.hasPermission("grapplinghook.pull.items")){
-	        	for(Entity ent : event.getHook().getNearbyEntities(1.5, 1, 1.5)){
-	        		if(ent instanceof Item){
-						if(HookAPI.canHookEntityType(player, EntityType.DROPPED_ITEM)) {
-							PlayerGrappleEvent e = new PlayerGrappleEvent(player, ent, player.getLocation());
-							plugin.getServer().getPluginManager().callEvent(e);
-							return;
-						}
-	        		}
-	        	}
-			}
-        	
-			if(plugin.usePerms() == false || player.hasPermission("grapplinghook.pull.self")){
-				//block check has already been performed to get it stuck
-				if(activeStickyHook){
-					PlayerGrappleEvent e = new PlayerGrappleEvent(player, player, loc);
-					plugin.getServer().getPluginManager().callEvent(e);
+				// Проверка на null и корректные типы предметов
+				ItemStack mainHand = player.getInventory().getItemInMainHand();
+				if (mainHand == null || mainHand.getType() != Material.FISHING_ROD) {
+					return;
 				}
-				else {
-					Block block = loc.clone().add(0, -0.3, 0).getBlock();
-					if (HookAPI.canHookMaterial(player, block.getType())) {
-						PlayerGrappleEvent e = new PlayerGrappleEvent(player, player, loc);
-						plugin.getServer().getPluginManager().callEvent(e);
-					}
+
+				// Проверяем, является ли предмет крюком
+				if(!HookAPI.isGrapplingHook(mainHand)) {
+					return;
 				}
-			}
-        }
-        else if(event.getState() == org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_ENTITY){
-        	event.setCancelled(true);
-			if(!HookAPI.canHookEntityType(player, event.getCaught().getType())){
-				return;
-			}
-        	if(event.getCaught() instanceof Player){
-        		Player hooked = (Player)event.getCaught();
-        		if(hooked.hasPermission("grapplinghook.player.nopull")){
-	    			event.setCancelled(true);
-	    			//player.sendMessage(ChatColor.GRAY+hooked.getName()+" can not be pulled with grappling hooks.");
-	    		}
-        		else if(plugin.usePerms() == false || player.hasPermission("grapplinghook.pull.players")){
-            		PlayerGrappleEvent e = new PlayerGrappleEvent(player, hooked, player.getLocation());
-                	plugin.getServer().getPluginManager().callEvent(e);
-    			}
-        	}
-        	else if(plugin.usePerms() == false || player.hasPermission("grapplinghook.pull.mobs")){
-        		PlayerGrappleEvent e = new PlayerGrappleEvent(player, event.getCaught(), player.getLocation());
-            	plugin.getServer().getPluginManager().callEvent(e);
-			}
-        }
-        else if(event.getState() == org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH){
-			if(HookAPI.canHookMaterial(player, Material.WATER)){
-				PlayerGrappleEvent e = new PlayerGrappleEvent(player, player, event.getHook().getLocation());
-				plugin.getServer().getPluginManager().callEvent(e);
-			}
-			event.setCancelled(true);
-        }
-        //casting the fishing line out
-        else if(event.getState() == PlayerFishEvent.State.FISHING){
-			activeHookEntities.put(player.getUniqueId(), event.getHook());
 
-			event.getHook().setVelocity(event.getHook().getVelocity().multiply(HookAPI.getHookInHandVelocityThrow(player)));
+				// Проверяем разрешения только если они включены
+				if(plugin.usePerms() && !player.hasPermission("grapplinghook.pull.self")) {
+					return;
+				}
 
-			BukkitRunnable task = new BukkitRunnable() {
-				@Override
-				public void run() {
-					if(activeHookEntities.containsKey(player.getUniqueId())) {
-						FishHook hook = activeHookEntities.get(player.getUniqueId());
-						if (hook == null || hook.isDead()) {
-
-							Location hookLocation = hookLastLocation.get(player.getUniqueId());
-
-							if(HookAPI.isGrapplingHook(player.getInventory().getItemInMainHand())) {
-								boolean lineBreak = HookAPI.getHookInHandHasLineBreak(player);
-								if(lineBreak) {
-									FishingLineBreakEvent e = new FishingLineBreakEvent(player, hookLocation);
-									Bukkit.getServer().getPluginManager().callEvent(e);
-								}
-							}
-							activeHookEntities.remove(player.getUniqueId());
-							this.cancel();
-						}
-						else{
-							hookLastLocation.put(player.getUniqueId(), hook.getLocation());
-						}
+				// Получаем местоположение крюка
+				Location hookLoc = null;
+				try {
+					// Получаем сущность крюка
+					FishHook hookEntity = event.getHook();
+					if (hookEntity == null) {
+						plugin.getLogger().warning("Hook entity was null in fishEvent");
+						return;
 					}
 
-				}
-			};
-			task.runTaskTimer(plugin, 1, 1);
-		}
-		else if(event.getState() == PlayerFishEvent.State.REEL_IN){
+					// Сохраняем ссылку на сущность крюка для отслеживания
+					if(!activeHookEntities.containsKey(player.getUniqueId())){
+						activeHookEntities.put(player.getUniqueId(), hookEntity);
+					}
 
-			Block block = event.getHook().getLocation().clone().add(0, -0.1, 0).getBlock();
+					hookLoc = hookEntity.getLocation();
+					if (hookLoc == null) {
+						plugin.getLogger().warning("Hook location was null in fishEvent");
+						return;
+					}
+				} catch (Exception e) {
+					plugin.getLogger().warning("Error getting hook entity or location: " + e.getMessage());
+					return;
+				}
 
-			if (HookAPI.canHookMaterial(player, block.getType())) {
-				if(plugin.usePerms() == false || player.hasPermission("grapplinghook.pull.self")){
-					PlayerGrappleEvent e = new PlayerGrappleEvent(player, player, event.getHook().getLocation());
-					plugin.getServer().getPluginManager().callEvent(e);
-				}
-			}
-			else{
-				if(activeHookEntities.containsKey(player.getUniqueId())) {
-					activeHookEntities.remove(player.getUniqueId());
-				}
+				// Используем сохраненное местоположение крюка, если оно доступно
 				if(hookLastLocation.containsKey(player.getUniqueId())) {
+					hookLoc = hookLastLocation.get(player.getUniqueId());
 					hookLastLocation.remove(player.getUniqueId());
 				}
+
+				if (hookLoc == null) {
+					return;
+				}
+
+				// Корректируем местоположение крюка
+				hookLoc.add(0, 0.2, 0); // Убедимся, что игрок приземлится на верхнюю часть блока
+
+				if(!event.getState().equals(PlayerFishEvent.State.CAUGHT_ENTITY)){
+					Block hookBlock = hookLoc.getBlock();
+					if(hookBlock == null) {
+						return;
+					}
+
+					// Проверяем только для воздуха и воды
+					if(hookBlock.getType() == Material.AIR || hookBlock.getType() == Material.WATER) {
+						// Проверяем блок под крюком
+						Block blockBelow = hookBlock.getRelative(BlockFace.DOWN);
+						if(blockBelow.getType() != Material.AIR && 
+						   blockBelow.getType() != Material.WATER && 
+						   blockBelow.getType() != Material.LAVA) {
+							// Если под крюком есть твердый блок, опускаем местоположение
+							hookLoc.add(0, -1, 0);
+						} else {
+							// Если крюк в воздухе и нет твердого блока под ним, отменяем
+							if(hookBlock.getType() == Material.AIR) {
+								return;
+							}
+						}
+					}
+
+					// Если над блоком есть воздух, поднимаем местоположение
+					if(hookBlock.getRelative(BlockFace.UP).getType() == Material.AIR) {
+						hookLoc.add(0, 1, 0);
+					}
+				}
+
+				// Обрабатываем пойманную сущность
+				Entity caughtEntity = null;
+				try {
+					caughtEntity = event.getCaught();
+				} catch (Exception e) {
+					// Игнорируем ошибки, если сущность не поймана
+				}
+
+				if(caughtEntity != null) {
+					// Проверяем, можно ли зацепить этот тип сущности
+					if (!HookAPI.canHookEntityType(player, caughtEntity.getType())) {
+						player.sendMessage(plugin.getMessageManager().getHookMessage("cannot_hook_entity"));
+						return; 
+					}
+
+					// Проверяем особые случаи для игроков
+					if(caughtEntity.getType() == EntityType.PLAYER) {
+						if(caughtEntity instanceof Player) {
+							Player hooked = (Player)caughtEntity;
+							if(hooked.hasPermission("grapplinghook.player.nopull")) {
+								player.sendMessage(plugin.getMessageManager().getHookMessage("cannot_hook_player"));
+								return;
+							}
+						}
+					}
+
+					// Создаем событие для притягивания сущности
+					if(!plugin.usePerms() || player.hasPermission("grapplinghook.pull.mobs")) {
+						hookLoc = player.getLocation();
+						PlayerGrappleEvent grappleEvent = new PlayerGrappleEvent(player, mainHand, caughtEntity, hookLoc);
+						Bukkit.getServer().getPluginManager().callEvent(grappleEvent);
+					}
+				} else {
+					// Создаем событие для притягивания игрока
+					PlayerGrappleEvent grappleEvent = new PlayerGrappleEvent(player, mainHand, player, hookLoc);
+					Bukkit.getServer().getPluginManager().callEvent(grappleEvent);
+				}
 			}
-		}
-        else{
-			if(activeHookEntities.containsKey(player.getUniqueId())) {
-				activeHookEntities.remove(player.getUniqueId());
-			}
-			if(hookLastLocation.containsKey(player.getUniqueId())) {
-				hookLastLocation.remove(player.getUniqueId());
-			}
+		} catch (Exception e) {
+			plugin.getLogger().severe("Ошибка при обработке события крюка: " + e.getMessage());
+			e.printStackTrace();
 		}
     }
 

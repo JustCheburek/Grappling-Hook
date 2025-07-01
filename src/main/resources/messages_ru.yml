@@ -11,10 +11,15 @@ command:
   help_give_self: "/%command% give <hook_id> - выдать себе крюк"
   help_give_other: "/%command% give <hook_id> <player> - выдать крюк игроку"
   help_give_console: "/%command% give <hook_id> <player> - выдать крюк игроку"
+  help_info: "/%command% info - показать информацию о материалах для ремонта"
 
 hook:
   cooldown: "&7Вы не можете сделать это сейчас."
+  cannot_hook_material: "&cВы не можете зацепиться за этот материал!"
+  cannot_hook_entity: "&cВы не можете зацепить эту сущность!"
+  cannot_hook_player: "&cВы не можете зацепить этого игрока!"
   
 anvil:
   not_enough_xp: "&cУ вас недостаточно опыта для ремонта крюка."
-  repair_success: "&aКрюк успешно отремонтирован!" 
+  repair_success: "&aКрюк успешно отремонтирован!"
+  repair_info: "&aМатериалы добавляют использования: &fДерево +1, Камень +3, Железо +5, Золото +5, Изумруд +10, Алмаз +50" 

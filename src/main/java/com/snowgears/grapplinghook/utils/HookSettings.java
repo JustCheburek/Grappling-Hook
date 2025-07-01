@@ -139,6 +139,10 @@ public class HookSettings {
     }
 
     public boolean canHookMaterial(Material material){
-        return materials.containsKey(material);
+        if (material == Material.AIR) {
+            return false;
+        }
+        
+        return true;
     }
 }

@@ -15,8 +15,8 @@ import java.util.Arrays;
 
 public class GrapplingHook extends JavaPlugin{
 	
-	private GrapplingListener grapplingListener = new GrapplingListener(this);
-	private AnvilListener anvilListener = new AnvilListener(this);
+	private GrapplingListener grapplingListener;
+	private AnvilListener anvilListener;
 	private CommandHandler commandHandler;
 	private static GrapplingHook plugin;
 	protected FileConfiguration config;
@@ -31,73 +31,119 @@ public class GrapplingHook extends JavaPlugin{
 
 
 	public void onEnable(){
-		plugin = this;
-		getServer().getPluginManager().registerEvents(grapplingListener, this);
-		getServer().getPluginManager().registerEvents(anvilListener, this);
-		
-		File configFile = new File(this.getDataFolder() + "/config.yml");
-		if(!configFile.exists())
-		{
-		  this.saveDefaultConfig();
-		}
-        try {
-            ConfigUpdater.update(plugin, "config.yml", configFile, new ArrayList<>());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-		config = YamlConfiguration.loadConfiguration(configFile);
-
-		File recipeConfigFile = new File(getDataFolder(), "recipes.yml");
-		if (!recipeConfigFile.exists()) {
-			recipeConfigFile.getParentFile().mkdirs();
-			this.copy(getResource("recipes.yml"), recipeConfigFile);
-		}
-		recipeLoader = new RecipeLoader(plugin);
-		
-		usePerms = config.getBoolean("usePermissions");
-		teleportHooked = config.getBoolean("teleportToHook");
-		useMetrics = config.getBoolean("useMetrics");
-		consumeUseOnSlowfall = config.getBoolean("consumeUseOnSlowfall");
-		commandAlias = config.getString("command");
-		
-		// Инициализируем MessageManager
-		messageManager = new MessageManager(this);
-
-		if(useMetrics){
-			// You can find the plugin ids of your plugins on the page https://bstats.org/what-is-my-plugin-id
-			int pluginId = 9957;
-
+		try {
+			plugin = this;
+			
+			// Инициализируем конфигурацию
+			File configFile = new File(this.getDataFolder() + "/config.yml");
+			if(!configFile.exists()) {
+				this.saveDefaultConfig();
+			}
+			
 			try {
-				Metrics metrics = new Metrics(this, pluginId);
-			} catch(Exception e) {}
-
-			// Optional: Add custom charts
-			//metrics.addCustomChart(new Metrics.SimplePie("chart_id", () -> "My value"));
+				ConfigUpdater.update(plugin, "config.yml", configFile, new ArrayList<>());
+			} catch (IOException e) {
+				getLogger().severe("Error updating config: " + e.getMessage());
+			}
+			
+			config = YamlConfiguration.loadConfiguration(configFile);
+			
+			// Загружаем настройки из конфига
+			usePerms = config.getBoolean("usePermissions");
+			teleportHooked = config.getBoolean("teleportToHook");
+			useMetrics = config.getBoolean("useMetrics");
+			consumeUseOnSlowfall = config.getBoolean("consumeUseOnSlowfall");
+			commandAlias = config.getString("command");
+			
+			// Загружаем менеджер сообщений
+			messageManager = new MessageManager(this);
+			getLogger().info("MessageManager initialized");
+			
+			// Инициализируем слушателей
+			grapplingListener = new GrapplingListener(this);
+			anvilListener = new AnvilListener(this);
+			
+			// Регистрируем события
+			getServer().getPluginManager().registerEvents(grapplingListener, this);
+			getServer().getPluginManager().registerEvents(anvilListener, this);
+			getLogger().info("Event listeners registered");
+			
+			// Загружаем рецепты
+			File recipeConfigFile = new File(getDataFolder(), "recipes.yml");
+			if (!recipeConfigFile.exists()) {
+				recipeConfigFile.getParentFile().mkdirs();
+				this.copy(getResource("recipes.yml"), recipeConfigFile);
+			}
+			recipeLoader = new RecipeLoader(plugin);
+			getLogger().info("RecipeLoader initialized");
+			
+			// Инициализируем командный обработчик
+			commandHandler = new CommandHandler(this, "grapplinghook.operator", 
+				commandAlias, "Base command for the GrapplingHook plugin", 
+				"/gh", new ArrayList<>(Arrays.asList(commandAlias)));
+			getLogger().info("Command handler initialized");
+			
+			// Инициализируем метрики
+			if(useMetrics){
+				try {
+					int pluginId = 9957;
+					Metrics metrics = new Metrics(this, pluginId);
+					getLogger().info("Metrics initialized");
+				} catch(Exception e) {
+					getLogger().warning("Failed to initialize metrics: " + e.getMessage());
+				}
+			}
+			
+			getLogger().info("GrapplingHook successfully enabled!");
+			
+		} catch (Exception e) {
+			getLogger().severe("Error enabling GrapplingHook: " + e.getMessage());
+			e.printStackTrace();
 		}
-
-		commandHandler = new CommandHandler(this, "grapplinghook.operator", commandAlias, "Base command for the GrapplingHook plugin", "/gh", new ArrayList(Arrays.asList(commandAlias)));
 	}
 
 	public void onDisable(){
-		recipeLoader.unloadRecipes();
+		try {
+			if (recipeLoader != null) {
+				recipeLoader.unloadRecipes();
+				getLogger().info("Recipes unloaded");
+			}
+			
+			getLogger().info("GrapplingHook successfully disabled!");
+		} catch (Exception e) {
+			getLogger().severe("Error disabling GrapplingHook: " + e.getMessage());
+		}
 	}
 
 	public void reload(){
-		HandlerList.unregisterAll(grapplingListener);
-		HandlerList.unregisterAll(anvilListener);
-		
-		// Перезагружаем MessageManager при перезагрузке плагина
-		if (messageManager != null) {
-			messageManager.reload();
-		}
-		
-		// Перезагружаем RecipeLoader при перезагрузке плагина
-		if (recipeLoader != null) {
-			recipeLoader.reload();
-		}
+		try {
+			getLogger().info("Reloading GrapplingHook...");
+			
+			// Отменяем регистрацию текущих слушателей
+			HandlerList.unregisterAll(grapplingListener);
+			HandlerList.unregisterAll(anvilListener);
+			
+			// Перезагружаем MessageManager при перезагрузке плагина
+			if (messageManager != null) {
+				messageManager.reload();
+				getLogger().info("MessageManager reloaded");
+			}
+			
+			// Перезагружаем RecipeLoader при перезагрузке плагина
+			if (recipeLoader != null) {
+				recipeLoader.reload();
+				getLogger().info("RecipeLoader reloaded");
+			}
 
-		onDisable();
-		onEnable();
+			// Перезагружаем все компоненты
+			onDisable();
+			onEnable();
+			
+			getLogger().info("GrapplingHook successfully reloaded!");
+		} catch (Exception e) {
+			getLogger().severe("Error reloading GrapplingHook: " + e.getMessage());
+			e.printStackTrace();
+		}
 	}
 	
 	public MessageManager getMessageManager() {
@@ -139,6 +185,11 @@ public class GrapplingHook extends JavaPlugin{
 
 	private void copy(InputStream in, File file) {
 		try {
+			if (in == null) {
+				getLogger().warning("Could not find resource to copy: " + file.getName());
+				return;
+			}
+			
 			OutputStream out = new FileOutputStream(file);
 			byte[] buf = new byte[1024];
 			int len;
@@ -148,7 +199,7 @@ public class GrapplingHook extends JavaPlugin{
 			out.close();
 			in.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			getLogger().severe("Error copying resource: " + e.getMessage());
 		}
 	}
 }

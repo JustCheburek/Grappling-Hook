@@ -11,10 +11,15 @@ command:
   help_give_self: "/%command% give <hook_id> - give yourself a hook"
   help_give_other: "/%command% give <hook_id> <player> - give player a hook"
   help_give_console: "/%command% give <hook_id> <player> - give player a hook"
+  help_info: "/%command% info - show repair material information"
 
 hook:
   cooldown: "&7You cannot do that yet."
+  cannot_hook_material: "&cYou cannot hook this material!"
+  cannot_hook_entity: "&cYou cannot hook this entity!"
+  cannot_hook_player: "&cYou cannot hook this player!"
   
 anvil:
   not_enough_xp: "&cYou don't have enough experience to repair this hook."
-  repair_success: "&aHook successfully repaired!" 
+  repair_success: "&aHook successfully repaired!"
+  repair_info: "&aRepair materials add uses: &fWood +1, Stone +3, Iron +5, Gold +5, Emerald +10, Diamond +50" 

@@ -132,20 +132,25 @@ public class RecipeLoader {
                     List<String> materialStrings = config.getStringList("recipes." + recipeNumber + ".material.list");
 
                     List<Material> materialList = new ArrayList<>();
+                    // Добавляем AIR в черный список для всех крюков
+                    materialList.add(Material.AIR);
+                    
                     for(String materialString : materialStrings){
                         try {
-                            if(!materialString.isEmpty())
+                            if(!materialString.isEmpty() && !materialString.equals("AIR"))
                                 materialList.add(Material.valueOf(materialString));
                         } catch (IllegalArgumentException e){
                             plugin.getLogger().log(Level.WARNING, "unrecognized material in recipe "+recipeNumber+": "+materialString);
                         }
                     }
 
-                    if(blackListString.equalsIgnoreCase("blacklist"))
-                        isBlackList = true;
-                    hookSettings.setMaterialList(isBlackList, materialList);
+                    // Всегда используем черный список
+                    hookSettings.setMaterialList(true, materialList);
                 } catch (NullPointerException e){
-                    hookSettings.setMaterialList(true, new ArrayList<>());
+                    // Создаем черный список только с AIR
+                    List<Material> materialList = new ArrayList<>();
+                    materialList.add(Material.AIR);
+                    hookSettings.setMaterialList(true, materialList);
                 }
 
                 ItemStack hookItem = new ItemStack(Material.FISHING_ROD);
@@ -161,6 +166,15 @@ public class RecipeLoader {
 
                 if(customModelData != 0)
                     hookItemMeta.setCustomModelData(Integer.valueOf(customModelData));
+
+                // Устанавливаем неразрушимость предмета
+                hookItemMeta.setUnbreakable(true);
+                
+                // Скрываем информацию о рецептах и другие атрибуты
+                hookItemMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);
+                hookItemMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
+                hookItemMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+                hookItemMeta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_POTION_EFFECTS);
 
                 PersistentDataContainer persistentData = hookItemMeta.getPersistentDataContainer();
                 persistentData.set(new NamespacedKey(plugin, "uses"), PersistentDataType.INTEGER, uses);
@@ -235,8 +249,8 @@ public class RecipeLoader {
                 }
                 if(threeLettersArray[0].endsWith("_") && threeLettersArray[1].endsWith("_") && threeLettersArray[2].endsWith("_")){
                     threeLettersArray[0] = threeLettersArray[0].substring(0, threeLettersArray[0].length()-1);
-                    threeLettersArray[1] = threeLettersArray[0].substring(0, threeLettersArray[1].length()-1);
-                    threeLettersArray[2] = threeLettersArray[0].substring(0, threeLettersArray[2].length()-1);
+                    threeLettersArray[1] = threeLettersArray[1].substring(0, threeLettersArray[1].length()-1);
+                    threeLettersArray[2] = threeLettersArray[2].substring(0, threeLettersArray[2].length()-1);
                 }
 
                 if(onlyContainsUnderscores(threeLettersArray[0])){
@@ -318,7 +332,15 @@ public class RecipeLoader {
     }
 
     private String formatString(String unformattedString, int uses){
+        // Заменяем [uses] на количество использований
         unformattedString = unformattedString.replace("[uses]", ""+uses);
+        
+        // Заменяем числа в строках, содержащих "Uses left" или "uses left"
+        if (unformattedString.contains("Uses left") || unformattedString.contains("uses left")) {
+            unformattedString = unformattedString.replaceAll("\\d+", ""+uses);
+        }
+        
+        // Переводим цветовые коды
         unformattedString = ChatColor.translateAlternateColorCodes('&', unformattedString);
         return unformattedString;
     }

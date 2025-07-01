@@ -43,6 +43,13 @@ public class CommandHandler extends BukkitCommand {
                     placeholders.put("command", this.getName());
                     player.sendMessage(plugin.getMessageManager().getCommandMessage("help_give_self", placeholders));
                     player.sendMessage(plugin.getMessageManager().getCommandMessage("help_give_other", placeholders));
+                    player.sendMessage(plugin.getMessageManager().getCommandMessage("help_info", placeholders));
+                    return true;
+                } else {
+                    // Показываем команду info всем игрокам
+                    Map<String, String> placeholders = new HashMap<>();
+                    placeholders.put("command", this.getName());
+                    player.sendMessage(plugin.getMessageManager().getCommandMessage("help_info", placeholders));
                     return true;
                 }
             }
@@ -51,6 +58,7 @@ public class CommandHandler extends BukkitCommand {
                 Map<String, String> placeholders = new HashMap<>();
                 placeholders.put("command", this.getName());
                 sender.sendMessage(plugin.getMessageManager().getCommandMessage("help_give_console", placeholders));
+                sender.sendMessage(plugin.getMessageManager().getCommandMessage("help_info", placeholders));
                 return true;
             }
         } else if (args.length == 1) {
@@ -68,6 +76,15 @@ public class CommandHandler extends BukkitCommand {
                     sender.sendMessage(plugin.getMessageManager().getCommandMessage("reload_console"));
                     return true;
                 }
+            } else if (args[0].equalsIgnoreCase("info")) {
+                // Команда для отображения информации о ремонте крюков
+                if (sender instanceof Player) {
+                    Player player = (Player) sender;
+                    player.sendMessage(plugin.getMessageManager().getMessage("anvil.repair_info"));
+                } else {
+                    sender.sendMessage(plugin.getMessageManager().getMessage("anvil.repair_info"));
+                }
+                return true;
             }
         } else if (args.length == 2) {
             if (args[0].equalsIgnoreCase("give")) {
@@ -188,6 +205,7 @@ public class CommandHandler extends BukkitCommand {
             if(showOperatorCommands){
                 results.add("give");
                 results.add("reload");
+                results.add("info");
             }
             return sortedResults(args[0], results);
         }
