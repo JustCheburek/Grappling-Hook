@@ -103,14 +103,21 @@ public class RecipeLoader {
                 int customModelData = config.getInt("recipes." + recipeNumber + ".customModelData", 0);
 
                 // Устанавливаем CustomModelData из конфигурации
-                int configCustomModelData = getCustomModelData(id);
-                if (configCustomModelData > 0) {
+                int[] customModelDataValues = getCustomModelDataValues(id);
+                int customModelDataUncast = customModelDataValues[0];
+                int customModelDataCast = customModelDataValues[1];
+                
+                if (customModelDataUncast > 0) {
                     // Используем значение из конфигурации вместо значения из рецепта
-                    customModelData = configCustomModelData;
-                    plugin.getLogger().info("Using CustomModelData from config for " + id + ": " + customModelData);
+                    plugin.getLogger().info("Using CustomModelData from config for " + id + ": uncast=" + customModelDataUncast + ", cast=" + customModelDataCast);
+                } else if (customModelData > 0) {
+                    // Если в конфигурации нет значений, но есть в рецепте, используем одинаковые значения для обоих состояний
+                    customModelDataUncast = customModelData;
+                    customModelDataCast = customModelData;
+                    plugin.getLogger().info("Using CustomModelData from recipe for " + id + ": " + customModelData);
                 }
 
-                HookSettings hookSettings = new HookSettings(id, uses, velocityThrow, velocityPull, timeBetweenGrapples, fallDamage, slowFall, lineBreak, stickyHook, customModelData);
+                HookSettings hookSettings = new HookSettings(id, uses, velocityThrow, velocityPull, timeBetweenGrapples, fallDamage, slowFall, lineBreak, stickyHook, customModelDataUncast, customModelDataCast);
 
                 try {
                     boolean isBlackList = false;
@@ -172,8 +179,8 @@ public class RecipeLoader {
                     hookItemMeta.setLore(loreList);
                 }
 
-                if(customModelData != 0)
-                    hookItemMeta.setCustomModelData(Integer.valueOf(customModelData));
+                if(customModelDataUncast != 0)
+                    hookItemMeta.setCustomModelData(Integer.valueOf(customModelDataUncast));
 
                 // Устанавливаем неразрушимость предмета
                 hookItemMeta.setUnbreakable(true);
@@ -354,25 +361,37 @@ public class RecipeLoader {
     }
 
     /**
-     * Получает значение CustomModelData из конфигурации для указанного ID крюка
+     * Получает значения CustomModelData из конфигурации для указанного ID крюка
      * @param hookId ID крюка
-     * @return значение CustomModelData или 0, если не найдено
+     * @return массив из двух значений: [uncast, cast] или [0, 0], если не найдено
      */
-    public int getCustomModelData(String hookId) {
+    public int[] getCustomModelDataValues(String hookId) {
         if (hookId == null) {
-            return 0;
+            return new int[] {0, 0};
         }
         
         // Проверяем, включены ли кастомные модели в конфигурации
         if (!plugin.getConfig().getBoolean("custom_models.enabled", false)) {
-            return 0;
+            return new int[] {0, 0};
         }
         
-        // Получаем значение CustomModelData из конфигурации
-        int customModelData = plugin.getConfig().getInt("custom_models." + hookId, 0);
+        // Получаем значения CustomModelData из конфигурации
+        int uncastValue = plugin.getConfig().getInt("custom_models." + hookId + ".uncast", 0);
+        int castValue = plugin.getConfig().getInt("custom_models." + hookId + ".cast", 0);
         
-        plugin.getLogger().info("Loaded CustomModelData for hook " + hookId + ": " + customModelData);
+        plugin.getLogger().info("Loaded CustomModelData for hook " + hookId + ": uncast=" + uncastValue + ", cast=" + castValue);
         
-        return customModelData;
+        return new int[] {uncastValue, castValue};
+    }
+    
+    /**
+     * Устаревший метод для обратной совместимости
+     * @param hookId ID крюка
+     * @return значение CustomModelData для неиспользуемого состояния или 0, если не найдено
+     */
+    @Deprecated
+    public int getCustomModelData(String hookId) {
+        int[] values = getCustomModelDataValues(hookId);
+        return values[0]; // Возвращаем значение для неиспользуемого состояния
     }
 }

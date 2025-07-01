@@ -23,7 +23,8 @@ public class HookSettings {
     private final boolean slowFall;
     private final boolean lineBreak;
     private final boolean stickyHook;
-    private final int customModelData;
+    private final int customModelDataUncast; // Модель для неиспользуемого состояния
+    private final int customModelDataCast;   // Модель для используемого состояния
 
     private ItemStack hookItem;
 
@@ -39,7 +40,8 @@ public class HookSettings {
         boolean slowFall,
         boolean lineBreak,
         boolean stickyHook,
-        int customModelData){
+        int customModelDataUncast,
+        int customModelDataCast){
 
         this.id = id;
         this.maxUses = maxUses;
@@ -50,7 +52,8 @@ public class HookSettings {
         this.slowFall = slowFall;
         this.lineBreak = lineBreak;
         this.stickyHook = stickyHook;
-        this.customModelData = customModelData;
+        this.customModelDataUncast = customModelDataUncast;
+        this.customModelDataCast = customModelDataCast;
     }
 
     public void setEntityList(boolean isBlackList, List<EntityType> entityTypeList){
@@ -91,11 +94,11 @@ public class HookSettings {
     }
 
     public void setHookItem(ItemStack hookItem) {
-        // Устанавливаем CustomModelData, если он задан и включен в конфигурации
-        if (this.customModelData > 0 && GrapplingHook.getPlugin().getConfig().getBoolean("custom_models.enabled", false)) {
+        // Устанавливаем CustomModelData для неиспользуемого состояния, если он задан и включен в конфигурациях
+        if (this.customModelDataUncast > 0 && GrapplingHook.getPlugin().getConfig().getBoolean("custom_models.enabled", false)) {
             if (hookItem != null && hookItem.getItemMeta() != null) {
                 ItemMeta meta = hookItem.getItemMeta();
-                meta.setCustomModelData(this.customModelData);
+                meta.setCustomModelData(this.customModelDataUncast);
                 hookItem.setItemMeta(meta);
             }
         }
@@ -138,8 +141,29 @@ public class HookSettings {
         return stickyHook;
     }
 
+    /**
+     * Получает значение CustomModelData для неиспользуемого состояния крюка
+     * @return значение CustomModelData для неиспользуемого состояния
+     */
+    public int getCustomModelDataUncast() {
+        return customModelDataUncast;
+    }
+
+    /**
+     * Получает значение CustomModelData для используемого состояния крюка
+     * @return значение CustomModelData для используемого состояния
+     */
+    public int getCustomModelDataCast() {
+        return customModelDataCast;
+    }
+
+    /**
+     * Устаревший метод для обратной совместимости
+     * @return значение CustomModelData для неиспользуемого состояния
+     */
+    @Deprecated
     public int getCustomModelData() {
-        return customModelData;
+        return customModelDataUncast;
     }
 
     public boolean canHookEntityType(EntityType entityType){

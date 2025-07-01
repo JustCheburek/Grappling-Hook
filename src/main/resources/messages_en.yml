@@ -22,4 +22,4 @@ hook:
 anvil:
   not_enough_xp: "&cYou don't have enough experience to repair this hook."
   repair_success: "&aHook successfully repaired!"
-  repair_info: "&aRepair materials add uses: &fWood +1, Stone +3, Iron +5, Gold +5, Emerald +10, Diamond +50" 
+  repair_info: "&aRepair materials add uses: &fWood +5, Stone +10, Iron +15, Gold +15, Emerald +30, Diamond +100" 

@@ -22,20 +22,58 @@ language: 'en'
 # These values are used to display custom textures with a resource pack #
 custom_models:
   # Standard hooks
-  grappling_hook: 10001
-  multipull_hook: 10002
-  rope_hook: 10003
-  ender_hook: 10004
+  grappling_hook:
+    uncast: 10001  # Когда крюк в руке (не заброшен)
+    cast: 11001    # Когда крюк заброшен
+  multipull_hook:
+    uncast: 10002
+    cast: 11002
+  rope_hook:
+    uncast: 10003
+    cast: 11003
+  ender_hook:
+    uncast: 10004
+    cast: 11004
   
   # Material hooks
-  wood_hook: 10101
-  stone_hook: 10102
-  iron_hook: 10103
-  gold_hook: 10104
-  emerald_hook: 10105
-  diamond_hook: 10106
-  air_hook: 10107
-  water_hook: 10108
+  wood_hook:
+    uncast: 10101
+    cast: 11101
+  stone_hook:
+    uncast: 10102
+    cast: 11102
+  iron_hook:
+    uncast: 10103
+    cast: 11103
+  gold_hook:
+    uncast: 10104
+    cast: 11104
+  emerald_hook:
+    uncast: 10105
+    cast: 11105
+  diamond_hook:
+    uncast: 10106
+    cast: 11106
+  air_hook:
+    uncast: 10107
+    cast: 11107
+  water_hook:
+    uncast: 10108
+    cast: 11108
   
   # Set to true to enable custom model data for hooks
   enabled: true
+
+# Пример структуры ресурспака для удочки:
+# В файле assets/minecraft/models/item/fishing_rod.json нужно добавить:
+# {
+#   "parent": "item/handheld_rod",
+#   "textures": {
+#     "layer0": "item/fishing_rod"
+#   },
+#   "overrides": [
+#     {"predicate": {"custom_model_data": 10001}, "model": "item/grappling_hook_uncast"},
+#     {"predicate": {"custom_model_data": 11001, "cast": 1}, "model": "item/grappling_hook_cast"},
+#     ... и так далее для всех типов крюков
+#   ]
+# }
