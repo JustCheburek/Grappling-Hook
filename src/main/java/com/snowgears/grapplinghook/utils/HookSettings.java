@@ -94,8 +94,8 @@ public class HookSettings {
     }
 
     public void setHookItem(ItemStack hookItem) {
-        // Устанавливаем CustomModelData для неиспользуемого состояния, если он задан и включен в конфигурациях
-        if (this.customModelDataUncast > 0 && GrapplingHook.getPlugin().getConfig().getBoolean("custom_models.enabled", false)) {
+        // Устанавливаем CustomModelData для неиспользуемого состояния, если он задан
+        if (this.customModelDataUncast > 0) {
             if (hookItem != null && hookItem.getItemMeta() != null) {
                 ItemMeta meta = hookItem.getItemMeta();
                 meta.setCustomModelData(this.customModelDataUncast);
@@ -171,7 +171,13 @@ public class HookSettings {
     }
 
     public boolean canHookMaterial(Material material){
-        if (material == null || material == Material.AIR) {
+        if (material == null || material == Material.AIR || material == Material.CAVE_AIR || material == Material.VOID_AIR) {
+            return false;
+        }
+        
+        // Проверка на жидкости
+        if (material == Material.WATER || material == Material.LAVA || 
+            material.name().contains("FLOWING")) {
             return false;
         }
         

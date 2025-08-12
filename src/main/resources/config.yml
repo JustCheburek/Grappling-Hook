@@ -18,6 +18,14 @@ command: 'gh'
 # Language setting (en, ru) #
 language: 'en'
 
+# JEI/REI Recipe Settings #
+# Setting hideRecipesFromJEI to true will hide recipes from JEI/REI mods #
+hideRecipesFromJEI: true
+
+# Setting additionalJEIHiding to true will apply additional methods to hide recipes #
+# This can help with mods that don't respect the standard hiding methods #
+additionalJEIHiding: true
+
 # Custom Model Data settings for different hook types #
 # These values are used to display custom textures with a resource pack #
 custom_models:

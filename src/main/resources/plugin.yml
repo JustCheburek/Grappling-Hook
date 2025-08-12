@@ -2,13 +2,13 @@ name: GrapplingHook
 author: SnowGears
 description: A simple grappling hook plugin.
 version: ${version}
-api: '1.13'
+api: '1.21'
 main: com.snowgears.grapplinghook.GrapplingHook
-api-version: '1.20'
+api-version: '1.21'
 commands:
   gh:
     description: Main command for GrapplingHook plugin
-    usage: /gh [help|reload|give]
+    usage: /gh [help|reload|give|info|test]
     aliases: [grapplinghook]
 permissions:
     grapplinghook.pull.self:

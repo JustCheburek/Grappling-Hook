@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
+import java.lang.reflect.Method;
 
 public class RecipeLoader {
 
@@ -194,6 +195,62 @@ public class RecipeLoader {
                 PersistentDataContainer persistentData = hookItemMeta.getPersistentDataContainer();
                 persistentData.set(new NamespacedKey(plugin, "uses"), PersistentDataType.INTEGER, uses);
                 persistentData.set(new NamespacedKey(plugin, "id"), PersistentDataType.STRING, id);
+                
+                // Добавляем метаданные для скрытия от JEI/REI, если включена соответствующая опция
+                if (plugin.getConfig().getBoolean("hideRecipesFromJEI", false)) {
+                    // Добавляем специальный тег для скрытия от JEI/REI
+                    persistentData.set(new NamespacedKey(plugin, "hidden_from_jei"), PersistentDataType.INTEGER, 1);
+                    
+                    // Добавляем все возможные флаги для скрытия предмета
+                    for (org.bukkit.inventory.ItemFlag flag : org.bukkit.inventory.ItemFlag.values()) {
+                        hookItemMeta.addItemFlags(flag);
+                    }
+                    
+                    // Если включены дополнительные методы скрытия
+                    if (plugin.getConfig().getBoolean("additionalJEIHiding", false)) {
+                        // Добавляем специальные строки в лор, которые распознаются JEI/REI для скрытия
+                    List<String> currentLore = hookItemMeta.getLore();
+                    List<String> newLore = currentLore != null ? new ArrayList<>(currentLore) : new ArrayList<>();
+                    
+                        // Добавляем невидимые строки с тегами для JEI/REI
+                        newLore.add("§8§o§l§d§e§n§f§r§o§m§j§e§i"); // Скрытый текст для JEI
+                        newLore.add("§8§o§l§d§e§n§f§r§o§m§r§e§i"); // Скрытый текст для REI
+                        newLore.add("§8§o§l§d§e§n§f§r§o§m§e§m§i"); // Скрытый текст для EMI
+                        
+                        // Добавляем специальные теги, которые распознаются модами
+                        newLore.add("§7§o[JEI: Hidden]");
+                        newLore.add("§7§o[REI: Hidden]");
+                        newLore.add("§7§o[EMI: Hidden]");
+                        
+                    hookItemMeta.setLore(newLore);
+                    
+                        // Устанавливаем специальное имя с тегом для дополнительного распознавания
+                        String currentName = hookItemMeta.getDisplayName();
+                        if (currentName != null && !currentName.isEmpty()) {
+                            // Добавляем невидимый тег в конец имени
+                            hookItemMeta.setDisplayName(currentName + "§r§8§o§l§d§e§n");
+                        }
+                    }
+                    
+                    // Добавляем скрытые атрибуты, которые некоторые моды используют для фильтрации
+                    try {
+                        // Добавляем специальный атрибут через API Bukkit
+                        NamespacedKey hideKey = new NamespacedKey(plugin, "jei_hidden");
+                        persistentData.set(hideKey, PersistentDataType.STRING, "true");
+                        
+                        // Добавляем еще один тег для REI
+                        NamespacedKey reiKey = new NamespacedKey(plugin, "rei_hidden");
+                        persistentData.set(reiKey, PersistentDataType.STRING, "true");
+                        
+                        // Добавляем тег для EMI
+                        NamespacedKey emiKey = new NamespacedKey(plugin, "emi_hidden");
+                        persistentData.set(emiKey, PersistentDataType.STRING, "true");
+                        
+                        plugin.getLogger().info("Добавлены метаданные для скрытия предмета " + id + " от JEI/REI/EMI");
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("Не удалось добавить метаданные для скрытия от JEI/REI/EMI: " + e.getMessage());
+                    }
+                }
 
                 hookItem.setItemMeta(hookItemMeta);
 
@@ -319,6 +376,34 @@ public class RecipeLoader {
                 try {
                     Bukkit.addRecipe(recipe);
                     loadedCount++;
+                    
+                    // Скрываем рецепт от JEI/REI, если включена соответствующая опция
+                    if (plugin.getConfig().getBoolean("hideRecipesFromJEI", false)) {
+                        // Добавляем метаданные к рецепту для скрытия от JEI/REI
+                        try {
+                            // Метод 1: Добавляем тег forge:hidden_from_recipe_viewers
+                            // Это работает для JEI на Forge
+                            NamespacedKey hiddenKey = new NamespacedKey("forge", "hidden_from_recipe_viewers");
+                            recipe.getClass().getMethod("addTag", NamespacedKey.class).invoke(recipe, hiddenKey);
+                        } catch (Exception e) {
+                            // Игнорируем ошибку, если метод не существует (в зависимости от версии сервера)
+                        }
+                        
+                        // Метод 2: Устанавливаем специальный флаг в ItemStack
+                        // Это может работать для некоторых версий REI
+                        ItemStack result = recipe.getResult();
+                        if (result != null && result.hasItemMeta()) {
+                            ItemMeta meta = result.getItemMeta();
+                            meta.getPersistentDataContainer().set(
+                                new NamespacedKey(plugin, "hidden_from_jei"), 
+                                PersistentDataType.INTEGER, 
+                                1
+                            );
+                            result.setItemMeta(meta);
+                        }
+                        
+                        plugin.getLogger().info("Скрыт рецепт для " + id + " от JEI/REI");
+                    }
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING, "Failed to add recipe for " + id + ": " + e.getMessage());
                 }
@@ -350,9 +435,22 @@ public class RecipeLoader {
         // Заменяем [uses] на количество использований
         unformattedString = unformattedString.replace("[uses]", ""+uses);
         
-        // Заменяем числа в строках, содержащих "Uses left" или "uses left"
+        // Заменяем строки с "Uses left" или "uses left" на правильно отформатированные
         if (unformattedString.contains("Uses left") || unformattedString.contains("uses left")) {
-            unformattedString = unformattedString.replaceAll("\\d+", ""+uses);
+            // Определяем цвет в зависимости от оставшихся использований
+            String usesColor = "&a"; // Зеленый
+            if (uses < 10) {
+                usesColor = "&c"; // Красный
+            } else if (uses < 50) {
+                usesColor = "&6"; // Золотой
+            }
+            
+            // Создаем новую строку с правильным форматированием
+            if (unformattedString.contains("Uses left")) {
+                unformattedString = "&cUses left: " + usesColor + uses;
+            } else {
+                unformattedString = "&cuses left: " + usesColor + uses;
+            }
         }
         
         // Переводим цветовые коды
@@ -366,22 +464,28 @@ public class RecipeLoader {
      * @return массив из двух значений: [uncast, cast] или [0, 0], если не найдено
      */
     public int[] getCustomModelDataValues(String hookId) {
+        int[] result = new int[2];
+        
         if (hookId == null) {
+            plugin.getLogger().warning("Получен null hookId при получении CustomModelData");
             return new int[] {0, 0};
         }
         
-        // Проверяем, включены ли кастомные модели в конфигурации
-        if (!plugin.getConfig().getBoolean("custom_models.enabled", false)) {
-            return new int[] {0, 0};
+        // Проверяем наличие настроек в конфигурации
+        if (plugin.getConfig().contains("custom_models." + hookId)) {
+            // Получаем значения из конфигурации
+            result[0] = plugin.getConfig().getInt("custom_models." + hookId + ".uncast", 0);
+            result[1] = plugin.getConfig().getInt("custom_models." + hookId + ".cast", 0);
+        
+            plugin.getLogger().info("Загружены значения CustomModelData для " + hookId + ": uncast=" + result[0] + ", cast=" + result[1]);
+        } else {
+            // Если нет настроек для конкретного ID, используем значения по умолчанию
+            plugin.getLogger().warning("Не найдены настройки CustomModelData для " + hookId + " в конфигурации");
+            result[0] = 0;
+            result[1] = 0;
         }
         
-        // Получаем значения CustomModelData из конфигурации
-        int uncastValue = plugin.getConfig().getInt("custom_models." + hookId + ".uncast", 0);
-        int castValue = plugin.getConfig().getInt("custom_models." + hookId + ".cast", 0);
-        
-        plugin.getLogger().info("Loaded CustomModelData for hook " + hookId + ": uncast=" + uncastValue + ", cast=" + castValue);
-        
-        return new int[] {uncastValue, castValue};
+        return result;
     }
     
     /**

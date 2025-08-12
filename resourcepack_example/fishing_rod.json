@@ -1,0 +1,43 @@
+{
+  "parent": "item/handheld_rod",
+  "textures": {
+    "layer0": "item/fishing_rod"
+  },
+  "overrides": [
+    {"predicate": {"custom_model_data": 10001}, "model": "item/grappling_hook_uncast"},
+    {"predicate": {"custom_model_data": 11001, "cast": 1}, "model": "item/grappling_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10002}, "model": "item/multipull_hook_uncast"},
+    {"predicate": {"custom_model_data": 11002, "cast": 1}, "model": "item/multipull_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10003}, "model": "item/rope_hook_uncast"},
+    {"predicate": {"custom_model_data": 11003, "cast": 1}, "model": "item/rope_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10004}, "model": "item/ender_hook_uncast"},
+    {"predicate": {"custom_model_data": 11004, "cast": 1}, "model": "item/ender_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10101}, "model": "item/wood_hook_uncast"},
+    {"predicate": {"custom_model_data": 11101, "cast": 1}, "model": "item/wood_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10102}, "model": "item/stone_hook_uncast"},
+    {"predicate": {"custom_model_data": 11102, "cast": 1}, "model": "item/stone_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10103}, "model": "item/iron_hook_uncast"},
+    {"predicate": {"custom_model_data": 11103, "cast": 1}, "model": "item/iron_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10104}, "model": "item/gold_hook_uncast"},
+    {"predicate": {"custom_model_data": 11104, "cast": 1}, "model": "item/gold_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10105}, "model": "item/emerald_hook_uncast"},
+    {"predicate": {"custom_model_data": 11105, "cast": 1}, "model": "item/emerald_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10106}, "model": "item/diamond_hook_uncast"},
+    {"predicate": {"custom_model_data": 11106, "cast": 1}, "model": "item/diamond_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10107}, "model": "item/air_hook_uncast"},
+    {"predicate": {"custom_model_data": 11107, "cast": 1}, "model": "item/air_hook_cast"},
+    
+    {"predicate": {"custom_model_data": 10108}, "model": "item/water_hook_uncast"},
+    {"predicate": {"custom_model_data": 11108, "cast": 1}, "model": "item/water_hook_cast"}
+  ]
+} 

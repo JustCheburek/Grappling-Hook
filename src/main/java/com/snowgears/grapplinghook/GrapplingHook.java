@@ -12,6 +12,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ArmorStand;
 
 public class GrapplingHook extends JavaPlugin{
 	
@@ -77,10 +81,10 @@ public class GrapplingHook extends JavaPlugin{
 			recipeLoader = new RecipeLoader(plugin);
 			getLogger().info("RecipeLoader initialized");
 			
-			// Инициализируем командный обработчик
-			commandHandler = new CommandHandler(this, "grapplinghook.operator", 
-				commandAlias, "Base command for the GrapplingHook plugin", 
-				"/gh", new ArrayList<>(Arrays.asList(commandAlias)));
+			// Регистрируем команды через plugin.yml
+			commandHandler = new CommandHandler(this);
+			getCommand(commandAlias).setExecutor(commandHandler);
+			getCommand(commandAlias).setTabCompleter(commandHandler);
 			getLogger().info("Command handler initialized");
 			
 			// Инициализируем метрики
@@ -105,6 +109,24 @@ public class GrapplingHook extends JavaPlugin{
 
 	public void onDisable(){
 		try {
+			// Отменяем все задачи плагина
+			Bukkit.getScheduler().cancelTasks(this);
+			
+			// Очищаем все метаданные, установленные плагином
+			for (World world : Bukkit.getWorlds()) {
+				for (Entity entity : world.getEntities()) {
+					if (entity.hasMetadata("stuckBlock") || entity.hasMetadata("grappling_hook_stand")) {
+						// Удаляем ArmorStand, созданные плагином
+						if (entity instanceof ArmorStand && entity.hasMetadata("grappling_hook_stand")) {
+							entity.remove();
+						}
+						// Очищаем метаданные
+						entity.removeMetadata("stuckBlock", this);
+						entity.removeMetadata("grappling_hook_stand", this);
+					}
+				}
+			}
+			
 			if (recipeLoader != null) {
 				recipeLoader.unloadRecipes();
 				getLogger().info("Recipes unloaded");

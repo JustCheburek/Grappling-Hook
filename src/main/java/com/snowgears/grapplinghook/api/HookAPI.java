@@ -195,13 +195,15 @@ public final class HookAPI {
 	}
 
 	public static boolean canHookMaterial(Player player, Material material){
-		// Если это воздух, всегда запрещаем зацепление
-		if (material == Material.AIR) {
+		// Если это воздух или null, всегда запрещаем зацепление
+		if (material == null || material == Material.AIR || material == Material.CAVE_AIR || material == Material.VOID_AIR) {
 			return false;
 		}
 		
-		// Для всех остальных материалов разрешаем зацепление
-		return true;
+		HookSettings hookSettings = getHookSettingsForHookInHand(player);
+		if(hookSettings == null)
+			return false;
+		return hookSettings.canHookMaterial(material);
 	}
 
 
@@ -282,9 +284,9 @@ public final class HookAPI {
 							String modifiedLine = loreLine;
 							// Заменяем [uses] на 0
 							modifiedLine = modifiedLine.replace("[uses]", String.valueOf(0));
-							// Заменяем числа в строках, содержащих "Uses left" или "uses left"
+							// Заменяем строки с "Uses left" или "uses left"
 							if (modifiedLine.contains("Uses left") || modifiedLine.contains("uses left")) {
-								// Изменяем цвет текста на красный, а цифры на темно-красный
+								// Создаем новую строку с правильным форматированием для сломанного крюка
 								modifiedLine = ChatColor.RED + "Uses left: " + ChatColor.DARK_RED + "0";
 							}
 							newLore.add(modifiedLine);
@@ -323,9 +325,17 @@ public final class HookAPI {
 							// Заменяем [uses] на новое значение
 							String modifiedLine = loreLine.replace("[uses]", String.valueOf(newUses));
 							
-							// Заменяем числа в строках, содержащих "Uses left" или "uses left"
+							// Полностью заменяем строки с "Uses left" или "uses left"
 							if (modifiedLine.contains("Uses left") || modifiedLine.contains("uses left")) {
-								modifiedLine = modifiedLine.replaceAll("\\d+", String.valueOf(newUses));
+								// Определяем цвет в зависимости от оставшихся использований
+								ChatColor usesColor = ChatColor.GREEN;
+								if (newUses < 10) {
+									usesColor = ChatColor.RED;
+								} else if (newUses < 50) {
+									usesColor = ChatColor.GOLD;
+								}
+								// Создаем новую строку с правильным форматированием
+								modifiedLine = ChatColor.RED + "Uses left: " + usesColor + newUses;
 							}
 							
 							newLore.add(modifiedLine);

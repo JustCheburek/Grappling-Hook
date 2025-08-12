@@ -1,38 +1,29 @@
 package com.snowgears.grapplinghook;
 
 import com.snowgears.grapplinghook.utils.HookSettings;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.command.CommandMap;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.defaults.BukkitCommand;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.util.StringUtil;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CommandHandler extends BukkitCommand {
+public class CommandHandler implements CommandExecutor, TabCompleter {
 
     private GrapplingHook plugin;
 
-    public CommandHandler(GrapplingHook instance, String permission, String name, String description, String usageMessage, List<String> aliases) {
-        super(name, description, usageMessage, aliases);
-        this.setPermission(permission);
+    public CommandHandler(GrapplingHook instance) {
         plugin = instance;
-        try {
-            register();
-        } catch (Exception e){
-            e.printStackTrace();
-        }
     }
 
     @Override
-    public boolean execute(CommandSender sender, String label, String[] args) {
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (args.length == 0) {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
@@ -40,7 +31,7 @@ public class CommandHandler extends BukkitCommand {
                 //these are commands only operators have access to
                 if (player.hasPermission("grapplinghook.operator") || player.isOp()) {
                     Map<String, String> placeholders = new HashMap<>();
-                    placeholders.put("command", this.getName());
+                    placeholders.put("command", label);
                     player.sendMessage(plugin.getMessageManager().getCommandMessage("help_give_self", placeholders));
                     player.sendMessage(plugin.getMessageManager().getCommandMessage("help_give_other", placeholders));
                     player.sendMessage(plugin.getMessageManager().getCommandMessage("help_info", placeholders));
@@ -48,7 +39,7 @@ public class CommandHandler extends BukkitCommand {
                 } else {
                     // Показываем команду info всем игрокам
                     Map<String, String> placeholders = new HashMap<>();
-                    placeholders.put("command", this.getName());
+                    placeholders.put("command", label);
                     player.sendMessage(plugin.getMessageManager().getCommandMessage("help_info", placeholders));
                     return true;
                 }
@@ -56,7 +47,7 @@ public class CommandHandler extends BukkitCommand {
             //these are commands that can be executed from the console
             else{
                 Map<String, String> placeholders = new HashMap<>();
-                placeholders.put("command", this.getName());
+                placeholders.put("command", label);
                 sender.sendMessage(plugin.getMessageManager().getCommandMessage("help_give_console", placeholders));
                 sender.sendMessage(plugin.getMessageManager().getCommandMessage("help_info", placeholders));
                 return true;
@@ -212,10 +203,10 @@ public class CommandHandler extends BukkitCommand {
     }
 
     @Override
-    public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+    public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
         List<String> results = new ArrayList<>();
         if (args.length == 0) {
-            results.add(this.getName());
+            results.add(cmd.getName());
         }
         else if (args.length == 1) {
 
@@ -282,15 +273,6 @@ public class CommandHandler extends BukkitCommand {
             return sortedResults(args[1], results);
         }
         return results;
-    }
-
-    private void register()
-            throws ReflectiveOperationException {
-        final Field bukkitCommandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-        bukkitCommandMap.setAccessible(true);
-
-        CommandMap commandMap = (CommandMap) bukkitCommandMap.get(Bukkit.getServer());
-        commandMap.register(this.getName(), this);
     }
 
     // Sorts possible results to provide true tab auto complete based off of what is already typed.

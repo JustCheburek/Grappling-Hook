@@ -16,6 +16,7 @@ import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -220,63 +221,60 @@ public class GrapplingListener implements Listener{
 	}
 
 	@EventHandler
-	public void onPlayerMove(PlayerMoveEvent event){
-		if(activeHookEntities.containsKey(event.getPlayer().getUniqueId())){
-			FishHook hook = activeHookEntities.get(event.getPlayer().getUniqueId());
-			if(hook != null && !hook.isDead()){
-				Block belowHook = hook.getLocation().getBlock().getRelative(BlockFace.DOWN);
-				if(belowHook.isPassable())
-					return;
-			}
-			else
-				return;
+	public void onPlayerMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
 
-			if(playersConsumedSlowfall.contains(event.getPlayer().getUniqueId())){
-				Block belowPlayer = event.getPlayer().getLocation().getBlock().getRelative(BlockFace.DOWN);
-				if(!belowPlayer.isPassable()){
-					if(HookAPI.isGrapplingHook(event.getPlayer().getInventory().getItemInMainHand())) {
-						HookAPI.addUse(event.getPlayer(), event.getPlayer().getInventory().getItemInMainHand());
-						playersConsumedSlowfall.remove(event.getPlayer().getUniqueId());
-					}
-				}
-			}
+        // Проверяем, есть ли у игрока активный крюк
+        if (activeHookEntities.containsKey(playerId)) {
+            FishHook hook = activeHookEntities.get(playerId);
 
-			Location hookLoc = hookLastLocation.get(event.getPlayer().getUniqueId());
-			if(hookLoc != null && hookLoc.getY() > event.getPlayer().getLocation().getY()) {
-				if(HookAPI.isGrapplingHook(event.getPlayer().getInventory().getItemInMainHand())) {
-					if(HookAPI.getHookInHandHasSlowFall(event.getPlayer())) {
-						event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 3, 1));
-						if(plugin.isConsumeUseOnSlowfall()) {
-							Block belowPlayer = event.getPlayer().getLocation().getBlock().getRelative(BlockFace.DOWN);
-							if(belowPlayer.isPassable()) {
-								playersConsumedSlowfall.add(event.getPlayer().getUniqueId());
-							}
-						}
-					}
-					
-					// Проверяем, является ли крюк алмазным или изумрудным для функции спуска
-					String hookId = HookAPI.getHookID(event.getPlayer().getInventory().getItemInMainHand());
-					if (hookId != null && (hookId.equals("diamond_hook") || hookId.equals("emerald_hook"))) {
-						// Проверяем, нажимает ли игрок клавишу приседания (shift)
-						if (event.getPlayer().isSneaking()) {
-							// Создаем вектор для спуска вниз
-							Vector descentVector = new Vector(0, -0.4, 0);
-							
-							// Применяем вектор к игроку для спуска
-							event.getPlayer().setVelocity(event.getPlayer().getVelocity().add(descentVector));
-							
-							// Добавляем эффект медленного падения для безопасного спуска
-							event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 5, 0));
-							
-							// Визуальный эффект спуска
-							event.getPlayer().getWorld().spawnParticle(Particle.CLOUD, 
-								event.getPlayer().getLocation().add(0, 0.5, 0), 3, 0.2, 0.2, 0.2, 0.01);
-						}
-					}
-				}
-			}
-		}
-	}
+            // Проверяем, что крюк существует и не уничтожен
+            if (hook == null || hook.isDead()) {
+                activeHookEntities.remove(playerId);
+                hookLastLocation.remove(playerId);
+                return;
+            }
+
+            // Сохраняем локацию крюка
+            hookLastLocation.put(playerId, hook.getLocation());
+
+            // Проверяем, что крюк зацепился за блок
+            Block belowHook = hook.getLocation().getBlock().getRelative(BlockFace.DOWN);
+            boolean hookedToBlock = !belowHook.isPassable() || hook.hasMetadata("stuckBlock");
+
+            if (hookedToBlock) {
+                // Проверяем, что игрок падает (его Y-координата меньше Y-координаты крюка)
+                if (player.getLocation().getY() < hook.getLocation().getY() - 0.1) {
+                    // Проверяем, что у игрока в руке крюк
+                    if (HookAPI.isGrapplingHook(player.getInventory().getItemInMainHand())) {
+                        // Получаем настройки крюка
+                        String hookId = HookAPI.getHookID(player.getInventory().getItemInMainHand());
+                        if (hookId != null && HookAPI.getHookInHandHasSlowFall(player)) {
+                            // Постоянно обновляем эффект медленного падения
+                            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 10, 0, false, false, true));
+                            // Запоминаем, что эффект был выдан
+                            playersConsumedSlowfall.add(playerId);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Если игрок приземлился после падения с крюком — снимаем эффект и тратим использование
+        if (playersConsumedSlowfall.contains(playerId)) {
+            Block belowPlayer = player.getLocation().getBlock().getRelative(BlockFace.DOWN);
+            if (!belowPlayer.isPassable()) {
+                // Снимаем эффект
+                player.removePotionEffect(PotionEffectType.SLOW_FALLING);
+                // Тратим использование крюка
+                if (HookAPI.isGrapplingHook(player.getInventory().getItemInMainHand())) {
+                    HookAPI.addUse(player, player.getInventory().getItemInMainHand());
+                }
+                playersConsumedSlowfall.remove(playerId);
+            }
+        }
+    }
 
 	@EventHandler
 	public void hookStuck(ProjectileHitEvent event) {
@@ -293,22 +291,44 @@ public class GrapplingListener implements Listener{
 
 					//only secure the sticky hook to the block if that block type can be hit by this hook
 					if(HookAPI.canHookMaterial(player, hitblock.getBlock().getType())) {
+						// Используем метаданные для отслеживания созданных ArmorStand
+						final String metaKey = "grappling_hook_stand";
+						
+						// Удаляем предыдущие стойки для этого игрока, если они есть
+						for (Entity entity : player.getWorld().getEntities()) {
+							if (entity instanceof ArmorStand && entity.hasMetadata(metaKey)) {
+								if (entity.getMetadata(metaKey).get(0).asString().equals(player.getUniqueId().toString())) {
+									entity.remove();
+								}
+							}
+						}
+						
 						ArmorStand armorStand = player.getWorld().spawn(hitblock, ArmorStand.class);
 						// Делаем стойку полностью невидимой
 						armorStand.setVisible(false);
-						armorStand.setInvisible(true); // Добавляем эффект невидимости
+						armorStand.setInvisible(true);
 						armorStand.setSmall(true);
 						armorStand.setArms(false);
 						armorStand.setMarker(true);
 						armorStand.setBasePlate(false);
 						armorStand.setGravity(false);
-						armorStand.setSilent(true); // Убираем звуки
+						armorStand.setSilent(true);
 						armorStand.setCustomNameVisible(false);
 						armorStand.addPassenger(fishHook);
+						
+						// Добавляем метаданные для отслеживания
+						armorStand.setMetadata(metaKey, new FixedMetadataValue(plugin, player.getUniqueId().toString()));
 						
 						fishHook.setGravity(false);
 						fishHook.setBounce(true);
 						fishHook.setMetadata("stuckBlock", new FixedMetadataValue(plugin, ""));
+						
+						// Удаляем стойку через некоторое время для предотвращения утечек памяти
+						Bukkit.getScheduler().runTaskLater(plugin, () -> {
+							if (armorStand != null && !armorStand.isDead()) {
+								armorStand.remove();
+							}
+						}, 20 * 60); // 60 секунд
 					}
 				}
 			}
@@ -319,129 +339,169 @@ public class GrapplingListener implements Listener{
     public void fishEvent(PlayerFishEvent event) //called before projectileLaunchEvent
     {
     	try {
-			if(event.getState() == PlayerFishEvent.State.IN_GROUND || event.getState() == PlayerFishEvent.State.CAUGHT_ENTITY){
-				Player player = event.getPlayer();
-
-				// Проверка на null и корректные типы предметов
-				ItemStack mainHand = player.getInventory().getItemInMainHand();
-				if (mainHand == null || mainHand.getType() != Material.FISHING_ROD) {
-					return;
-				}
-
-				// Проверяем, является ли предмет крюком
-				if(!HookAPI.isGrapplingHook(mainHand)) {
-					return;
-				}
-
-				// Проверяем разрешения только если они включены
-				if(plugin.usePerms() && !player.hasPermission("grapplinghook.pull.self")) {
-					return;
-				}
-
-				// Получаем местоположение крюка
-				Location hookLoc = null;
-				try {
-					// Получаем сущность крюка
-					FishHook hookEntity = event.getHook();
-					if (hookEntity == null) {
-						plugin.getLogger().warning("Hook entity was null in fishEvent");
-						return;
+			// Обработка изменения CustomModelData при забросе/возврате крюка
+			Player player = event.getPlayer();
+			ItemStack mainHand = player.getInventory().getItemInMainHand();
+			
+			// Проверяем, является ли предмет крюком
+			if (mainHand != null && mainHand.getType() == Material.FISHING_ROD && HookAPI.isGrapplingHook(mainHand)) {
+				String hookId = HookAPI.getHookID(mainHand);
+				if (hookId != null) {
+					HookSettings hookSettings = getHookSettings(hookId);
+					if (hookSettings != null) {
+						ItemMeta meta = mainHand.getItemMeta();
+						if (meta != null) {
+							// Устанавливаем соответствующий CustomModelData в зависимости от состояния крюка
+							if (event.getState() == PlayerFishEvent.State.FISHING) {
+								// Крюк заброшен - используем модель для состояния cast
+								int castModelData = hookSettings.getCustomModelDataCast();
+								if (castModelData > 0) {
+									meta.setCustomModelData(castModelData);
+									mainHand.setItemMeta(meta);
+								}
+							} else if (event.getState() == PlayerFishEvent.State.CAUGHT_FISH || 
+									  event.getState() == PlayerFishEvent.State.CAUGHT_ENTITY || 
+									  event.getState() == PlayerFishEvent.State.IN_GROUND || 
+									  event.getState() == PlayerFishEvent.State.FAILED_ATTEMPT || 
+									  event.getState() == PlayerFishEvent.State.REEL_IN) {
+								// Крюк возвращается - используем модель для состояния uncast
+								int uncastModelData = hookSettings.getCustomModelDataUncast();
+								if (uncastModelData > 0) {
+									meta.setCustomModelData(uncastModelData);
+									mainHand.setItemMeta(meta);
+								}
+							}
+						}
 					}
+				}
+			}
+			
+			// Обрабатываем только события, когда крюк попадает в блок или сущность
+			if(event.getState() != PlayerFishEvent.State.IN_GROUND && event.getState() != PlayerFishEvent.State.CAUGHT_ENTITY){
+				return;
+			}
+			
+			// Проверка на null и корректные типы предметов
+			if (mainHand == null || mainHand.getType() != Material.FISHING_ROD) {
+				return;
+			}
 
-					// Сохраняем ссылку на сущность крюка для отслеживания
-					if(!activeHookEntities.containsKey(player.getUniqueId())){
-						activeHookEntities.put(player.getUniqueId(), hookEntity);
-					}
+			// Проверяем, является ли предмет крюком
+			if(!HookAPI.isGrapplingHook(mainHand)) {
+				return;
+			}
 
-					hookLoc = hookEntity.getLocation();
-					if (hookLoc == null) {
-						plugin.getLogger().warning("Hook location was null in fishEvent");
-						return;
-					}
-				} catch (Exception e) {
-					plugin.getLogger().warning("Error getting hook entity or location: " + e.getMessage());
+			// Проверяем разрешения только если они включены
+			if(plugin.usePerms() && !player.hasPermission("grapplinghook.pull.self")) {
+				return;
+			}
+
+			// Получаем местоположение крюка
+			Location hookLoc = null;
+			try {
+				// Получаем сущность крюка
+				FishHook hookEntity = event.getHook();
+				if (hookEntity == null) {
 					return;
 				}
 
-				// Используем сохраненное местоположение крюка, если оно доступно
-				if(hookLastLocation.containsKey(player.getUniqueId())) {
-					hookLoc = hookLastLocation.get(player.getUniqueId());
-					hookLastLocation.remove(player.getUniqueId());
+				// Сохраняем ссылку на сущность крюка для отслеживания
+				if(!activeHookEntities.containsKey(player.getUniqueId())){
+					activeHookEntities.put(player.getUniqueId(), hookEntity);
 				}
 
+				hookLoc = hookEntity.getLocation();
 				if (hookLoc == null) {
 					return;
 				}
+			} catch (Exception e) {
+				plugin.getLogger().warning("Error getting hook entity or location: " + e.getMessage());
+				return;
+			}
 
-				// Корректируем местоположение крюка
-				hookLoc.add(0, 0.2, 0); // Убедимся, что игрок приземлится на верхнюю часть блока
+			// Используем сохраненное местоположение крюка, если оно доступно
+			if(hookLastLocation.containsKey(player.getUniqueId())) {
+				hookLoc = hookLastLocation.get(player.getUniqueId());
+				hookLastLocation.remove(player.getUniqueId());
+			}
 
-				if(!event.getState().equals(PlayerFishEvent.State.CAUGHT_ENTITY)){
-					Block hookBlock = hookLoc.getBlock();
-					if(hookBlock == null) {
-						return;
-					}
+			if (hookLoc == null) {
+				return;
+			}
 
-					// Проверяем только для воздуха и воды
-					if(hookBlock.getType() == Material.AIR || hookBlock.getType() == Material.WATER) {
-						// Проверяем блок под крюком
-						Block blockBelow = hookBlock.getRelative(BlockFace.DOWN);
-						if(blockBelow.getType() != Material.AIR && 
-						   blockBelow.getType() != Material.WATER && 
-						   blockBelow.getType() != Material.LAVA) {
-							// Если под крюком есть твердый блок, опускаем местоположение
-							hookLoc.add(0, -1, 0);
-						} else {
-							// Если крюк в воздухе и нет твердого блока под ним, отменяем
-							if(hookBlock.getType() == Material.AIR) {
-								return;
-							}
+			// Корректируем местоположение крюка
+			hookLoc.add(0, 0.2, 0); // Убедимся, что игрок приземлится на верхнюю часть блока
+
+			if(event.getState() == PlayerFishEvent.State.IN_GROUND){
+				Block hookBlock = hookLoc.getBlock();
+				if(hookBlock == null) {
+					return;
+				}
+
+				// Проверяем, можно ли зацепиться за этот блок
+				if (!HookAPI.canHookMaterial(player, hookBlock.getType())) {
+					return;
+				}
+
+				// Проверяем только для воздуха и воды
+				if(hookBlock.getType() == Material.AIR || hookBlock.getType() == Material.WATER) {
+					// Проверяем блок под крюком
+					Block blockBelow = hookBlock.getRelative(BlockFace.DOWN);
+					if(blockBelow.getType() != Material.AIR && 
+					   blockBelow.getType() != Material.WATER && 
+					   blockBelow.getType() != Material.LAVA) {
+						// Если под крюком есть твердый блок, опускаем местоположение
+						hookLoc.add(0, -1, 0);
+					} else {
+						// Если крюк в воздухе и нет твердого блока под ним, отменяем
+						if(hookBlock.getType() == Material.AIR) {
+							return;
 						}
-					}
-
-					// Если над блоком есть воздух, поднимаем местоположение
-					if(hookBlock.getRelative(BlockFace.UP).getType() == Material.AIR) {
-						hookLoc.add(0, 1, 0);
 					}
 				}
 
-				// Обрабатываем пойманную сущность
-				Entity caughtEntity = null;
-				try {
-					caughtEntity = event.getCaught();
-				} catch (Exception e) {
-					// Игнорируем ошибки, если сущность не поймана
+				// Если над блоком есть воздух, поднимаем местоположение
+				if(hookBlock.getRelative(BlockFace.UP).getType() == Material.AIR) {
+					hookLoc.add(0, 1, 0);
+				}
+			}
+
+			// Обрабатываем пойманную сущность
+			Entity caughtEntity = null;
+			try {
+				caughtEntity = event.getCaught();
+			} catch (Exception e) {
+				// Игнорируем ошибки, если сущность не поймана
+			}
+
+			if(caughtEntity != null) {
+				// Проверяем, можно ли зацепить этот тип сущности
+				if (!HookAPI.canHookEntityType(player, caughtEntity.getType())) {
+					player.sendMessage(plugin.getMessageManager().getHookMessage("cannot_hook_entity"));
+					return; 
 				}
 
-				if(caughtEntity != null) {
-					// Проверяем, можно ли зацепить этот тип сущности
-					if (!HookAPI.canHookEntityType(player, caughtEntity.getType())) {
-						player.sendMessage(plugin.getMessageManager().getHookMessage("cannot_hook_entity"));
-						return; 
-					}
-
-					// Проверяем особые случаи для игроков
-					if(caughtEntity.getType() == EntityType.PLAYER) {
-						if(caughtEntity instanceof Player) {
-							Player hooked = (Player)caughtEntity;
-							if(hooked.hasPermission("grapplinghook.player.nopull")) {
-								player.sendMessage(plugin.getMessageManager().getHookMessage("cannot_hook_player"));
-								return;
-							}
+				// Проверяем особые случаи для игроков
+				if(caughtEntity.getType() == EntityType.PLAYER) {
+					if(caughtEntity instanceof Player) {
+						Player hooked = (Player)caughtEntity;
+						if(hooked.hasPermission("grapplinghook.player.nopull")) {
+							player.sendMessage(plugin.getMessageManager().getHookMessage("cannot_hook_player"));
+							return;
 						}
 					}
+				}
 
-					// Создаем событие для притягивания сущности
-					if(!plugin.usePerms() || player.hasPermission("grapplinghook.pull.mobs")) {
-						hookLoc = player.getLocation();
-						PlayerGrappleEvent grappleEvent = new PlayerGrappleEvent(player, mainHand, caughtEntity, hookLoc);
-						Bukkit.getServer().getPluginManager().callEvent(grappleEvent);
-					}
-				} else {
-					// Создаем событие для притягивания игрока
-					PlayerGrappleEvent grappleEvent = new PlayerGrappleEvent(player, mainHand, player, hookLoc);
+				// Создаем событие для притягивания сущности
+				if(!plugin.usePerms() || player.hasPermission("grapplinghook.pull.mobs")) {
+					hookLoc = player.getLocation();
+					PlayerGrappleEvent grappleEvent = new PlayerGrappleEvent(player, mainHand, caughtEntity, hookLoc);
 					Bukkit.getServer().getPluginManager().callEvent(grappleEvent);
 				}
+			} else {
+				// Создаем событие для притягивания игрока
+				PlayerGrappleEvent grappleEvent = new PlayerGrappleEvent(player, mainHand, player, hookLoc);
+				Bukkit.getServer().getPluginManager().callEvent(grappleEvent);
 			}
 		} catch (Exception e) {
 			plugin.getLogger().severe("Ошибка при обработке события крюка: " + e.getMessage());
@@ -476,38 +536,6 @@ public class GrapplingListener implements Listener{
 //	}
 
 //	//FOR HOOKING AN ENTITY AND PULLING TOWARD YOU
-//	private void pullEntityToLocation(Entity e, Location loc){
-//		Location entityLoc = e.getLocation();
-//
-//		double dX = entityLoc.getX() - loc.getX();
-//		double dY = entityLoc.getY() - loc.getY();
-//		double dZ = entityLoc.getZ() - loc.getZ();
-//
-//		double yaw = Math.atan2(dZ, dX);
-//		double pitch = Math.atan2(Math.sqrt(dZ * dZ + dX * dX), dY) + Math.PI;
-//
-//		double X = Math.sin(pitch) * Math.cos(yaw);
-//		double Y = Math.sin(pitch) * Math.sin(yaw);
-//		double Z = Math.cos(pitch);
-//
-//		Vector vector = new Vector(X, Z, Y);
-//		e.setVelocity(vector.multiply(8));
-//	}
-
-	//For pulling a player slightly
-	private void pullPlayerSlightly(Player p, Location loc){
-		if(loc.getY() > p.getLocation().getY()){
-			p.setVelocity(new Vector(0,0.25,0));
-			return;
-		}
-		
-		Location playerLoc = p.getLocation();
-		
-		Vector vector = loc.toVector().subtract(playerLoc.toVector());
-		p.setVelocity(vector);
-	}
-	
-	//better method for pulling with optimized physics calculation
 	private void pullEntityToLocation(final Entity e, Location loc, double multiply){
 		Location entityLoc = e.getLocation();
 		
@@ -518,10 +546,20 @@ public class GrapplingListener implements Listener{
 		
 		// Используем более эффективный способ планирования задачи
 		Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			// Проверяем, что сущность все еще существует
+			if (e == null || e.isDead()) {
+				return;
+			}
+			
 			// Оптимизированные физические константы для более плавного движения
 			double g = -0.08;
 			double d = loc.distance(entityLoc);
 			double t = d;
+			
+			// Предотвращаем слишком большие значения скорости
+			if (t > 20) {
+				t = 20;
+			}
 			
 			// Кэшируем разницу координат для оптимизации
 			double dx = loc.getX() - entityLoc.getX();
@@ -532,9 +570,20 @@ public class GrapplingListener implements Listener{
 			double v_x = (1.0 + 0.07 * t) * dx / t;
 			double v_y = (1.0 + 0.03 * t) * dy / t - 0.5 * g * t;
 			double v_z = (1.0 + 0.07 * t) * dz / t;
+			
+			// Ограничиваем максимальную скорость для безопасности
+			double maxSpeed = 3.0;
+			double speed = Math.sqrt(v_x * v_x + v_y * v_y + v_z * v_z);
+			if (speed > maxSpeed) {
+				double scale = maxSpeed / speed;
+				v_x *= scale;
+				v_y *= scale;
+				v_z *= scale;
+			}
 
-			// Применяем вектор скорости напрямую вместо создания нового объекта
-			e.setVelocity(new Vector(v_x, v_y, v_z).multiply(multiply));
+			// Применяем вектор скорости
+			Vector velocity = new Vector(v_x, v_y, v_z).multiply(multiply);
+			e.setVelocity(velocity);
 			
 			// Добавляем защиту от урона падения, если необходимо
 			if(e instanceof Player){
@@ -547,6 +596,19 @@ public class GrapplingListener implements Listener{
 				addNoFall(e, 100);
 			}
 		}, 1L);
+	}
+	
+	//For pulling a player slightly
+	private void pullPlayerSlightly(Player p, Location loc){
+		if(loc.getY() > p.getLocation().getY()){
+			p.setVelocity(new Vector(0,0.25,0));
+			return;
+		}
+		
+		Location playerLoc = p.getLocation();
+		
+		Vector vector = loc.toVector().subtract(playerLoc.toVector());
+		p.setVelocity(vector);
 	}
 	
 	public void addNoFall(final Entity e, int ticks) {
