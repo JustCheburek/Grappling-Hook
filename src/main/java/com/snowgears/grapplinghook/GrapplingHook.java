@@ -35,6 +35,7 @@ public class GrapplingHook extends JavaPlugin{
 
 
 	public void onEnable(){
+<<<<<<< HEAD
 		try {
 			plugin = this;
 			
@@ -44,6 +45,57 @@ public class GrapplingHook extends JavaPlugin{
 				this.saveDefaultConfig();
 			}
 			
+=======
+		plugin = this;
+		getServer().getPluginManager().registerEvents(grapplingListener, this);
+		getServer().getPluginManager().registerEvents(anvilListener, this);
+		
+		File configFile = new File(this.getDataFolder() + "/config.yml");
+		if(!configFile.exists())
+		{
+		  this.saveDefaultConfig();
+		}
+        try {
+            ConfigUpdater.update(plugin, "config.yml", configFile, new ArrayList<>());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		config = YamlConfiguration.loadConfiguration(configFile);
+
+		// Сохраняем все необходимые ресурсы
+		saveResources();
+
+		// Проверяем наличие файла рецептов для текущей локали
+		String locale = config.getString("language", "en");
+		File recipeConfigFile = new File(getDataFolder(), "recipes_" + locale + ".yml");
+		if (!recipeConfigFile.exists()) {
+			recipeConfigFile.getParentFile().mkdirs();
+			// Пробуем загрузить локализованный файл из ресурсов
+			if (getResource("recipes_" + locale + ".yml") != null) {
+				this.saveResource("recipes_" + locale + ".yml", false);
+			} else {
+				// Если локализованного файла нет, используем английский
+				if (getResource("recipes_en.yml") != null) {
+					this.copy(getResource("recipes_en.yml"), recipeConfigFile);
+				}
+			}
+		}
+		recipeLoader = new RecipeLoader(plugin);
+		
+		usePerms = config.getBoolean("usePermissions");
+		teleportHooked = config.getBoolean("teleportToHook");
+		useMetrics = config.getBoolean("useMetrics");
+		consumeUseOnSlowfall = config.getBoolean("consumeUseOnSlowfall");
+		commandAlias = config.getString("command");
+		
+		// Инициализируем MessageManager
+		messageManager = new MessageManager(this);
+
+		if(useMetrics){
+			// You can find the plugin ids of your plugins on the page https://bstats.org/what-is-my-plugin-id
+			int pluginId = 9957;
+
+>>>>>>> 3b0d520802a6a907c888cbbc36200cab04b34000
 			try {
 				ConfigUpdater.update(plugin, "config.yml", configFile, new ArrayList<>());
 			} catch (IOException e) {
@@ -104,6 +156,39 @@ public class GrapplingHook extends JavaPlugin{
 		} catch (Exception e) {
 			getLogger().severe("Error enabling GrapplingHook: " + e.getMessage());
 			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Сохраняет все необходимые ресурсы плагина
+	 */
+	private void saveResources() {
+		// Получаем текущую локаль из конфига
+		String locale = config.getString("language", "en");
+		
+		// Сохраняем основные файлы ресурсов
+		saveResourceIfNotExists("recipes_en.yml");
+		saveResourceIfNotExists("messages_en.yml");
+		
+		// Сохраняем локализованные файлы, если они существуют
+		if (!locale.equals("en")) {
+			saveResourceIfNotExists("messages_" + locale + ".yml");
+			saveResourceIfNotExists("recipes_" + locale + ".yml");
+		}
+	}
+	
+	/**
+	 * Сохраняет ресурс, если он еще не существует в директории плагина
+	 * @param resourceName имя ресурса
+	 */
+	private void saveResourceIfNotExists(String resourceName) {
+		File resourceFile = new File(getDataFolder(), resourceName);
+		if (!resourceFile.exists()) {
+			try {
+				saveResource(resourceName, false);
+			} catch (Exception e) {
+				getLogger().warning("Could not save resource: " + resourceName);
+			}
 		}
 	}
 

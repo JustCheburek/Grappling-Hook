@@ -5,3 +5,4 @@
 GrapplingHook.iml
 target/
 build/
+!build/libs
